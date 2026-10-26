@@ -1,0 +1,10 @@
+{
+ "name": "Green cat",
+ "palette": {
+  "fur": "#3f9b4f",
+  "furHi": "#72cf7e",
+  "chest": "#eaf7e2",
+  "pink": "#e79fb3",
+  "eye": "#ffe066"
+ }
+}

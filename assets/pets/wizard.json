@@ -1,0 +1,177 @@
+{
+ "name": "Wizard",
+ "palette": {
+  "fur": "#59607a",
+  "furHi": "#8890ad",
+  "eye": "#7de08a"
+ },
+ "parts": {
+  "head": {
+   "shapes": [
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      6.0,
+      0.2
+     ],
+     "radii": [
+      4.9,
+      0.6,
+      4.6
+     ],
+     "color": "#3d2c8d"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      7.2,
+      0.1
+     ],
+     "radii": [
+      3.2,
+      1.0,
+      3.0
+     ],
+     "color": "#4b36ad"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      8.5,
+      0.0
+     ],
+     "radii": [
+      2.4,
+      1.4,
+      2.2
+     ],
+     "color": "#4b36ad"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      10.0,
+      -0.2
+     ],
+     "radii": [
+      1.6,
+      1.5,
+      1.5
+     ],
+     "color": "#4b36ad"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0.2,
+      11.5,
+      -0.5
+     ],
+     "radii": [
+      0.8,
+      1.2,
+      0.8
+     ],
+     "color": "#4b36ad"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      7.0,
+      3.0
+     ],
+     "radii": [
+      1.0,
+      0.5,
+      0.35
+     ],
+     "color": "#ffd24a"
+    }
+   ]
+  },
+  "torso": {
+   "shapes": [
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      1.2,
+      0
+     ],
+     "radii": [
+      3.0,
+      4.4,
+      2.6
+     ],
+     "color": "#3d2c8d"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      4.2,
+      0.3
+     ],
+     "radii": [
+      2.6,
+      1.6,
+      2.2
+     ],
+     "color": "#4b36ad"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      4.0,
+      2.0
+     ],
+     "radii": [
+      0.5,
+      2.4,
+      0.3
+     ],
+     "color": "#ffd24a"
+    }
+   ]
+  },
+  "phone": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      0,
+      0
+     ],
+     "radii": [
+      0.25,
+      2.6,
+      0.25
+     ],
+     "color": "#8a5a3a"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      2.9,
+      0
+     ],
+     "radii": [
+      0.8,
+      0.8,
+      0.8
+     ],
+     "color": "#7de0ff"
+    }
+   ]
+  }
+ }
+}

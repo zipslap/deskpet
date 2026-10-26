@@ -1,0 +1,59 @@
+{
+  "name": "deskpet",
+  "version": "0.9.0",
+  "description": "BETA: a 3D voxel desktop pet for macOS, Windows and Linux that talks to any AI, with offline voices and a pet you redesign by asking",
+  "private": true,
+  "type": "module",
+  "main": "./out/main/index.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm run helper && electron-vite dev",
+    "build": "electron-vite build",
+    "start": "npm run helper && electron-vite build && electron-vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "sprites": "node tools/make-sprites.mjs",
+    "e2e": "npm run helper && electron-vite build && node tools/e2e.mjs",
+    "helper": "node tools/build-helper.mjs",
+    "e2e:claude": "npm run helper && electron-vite build && node tools/e2e-claude.mjs",
+    "e2e:conversation": "npm run helper && electron-vite build && node tools/e2e-conversation.mjs",
+    "e2e:roam": "npm run helper && electron-vite build && node tools/e2e-roam.mjs",
+    "app": "npm run helper && electron-vite build && node tools/make-icon.mjs && node tools/make-app.mjs",
+    "setup": "node tools/setup.mjs",
+    "voices": "node tools/voices.mjs",
+    "e2e:pet": "npm run helper && electron-vite build && node tools/e2e-pet.mjs",
+    "speech": "node tools/speech.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "@types/three": "0.185.4",
+    "electron": "43.8.3",
+    "electron-vite": "6.0.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  },
+  "dependencies": {
+    "three": "0.185.1"
+  },
+  "license": "MIT",
+  "keywords": [
+    "desktop-pet",
+    "electron",
+    "ai",
+    "llm",
+    "claude",
+    "openai",
+    "gemini",
+    "ollama",
+    "tts",
+    "macos"
+  ],
+  "os": [
+    "darwin",
+    "win32",
+    "linux"
+  ]
+}

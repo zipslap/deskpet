@@ -1,0 +1,181 @@
+[
+  {
+    "id": "mock",
+    "label": "Offline demo (no AI, no network)",
+    "kind": "mock",
+    "needsKey": false,
+    "defaultModel": "",
+    "models": [],
+    "hint": "Canned replies; nothing leaves your computer."
+  },
+  {
+    "id": "claude-cli",
+    "label": "Claude subscription (the `claude` command)",
+    "kind": "claude-cli",
+    "needsKey": false,
+    "defaultModel": "sonnet",
+    "models": [
+      "haiku",
+      "sonnet",
+      "opus",
+      "fable"
+    ],
+    "summaryModel": "haiku",
+    "hint": "Uses Claude Code, signed in with your Claude plan. DeskPet never sees your login."
+  },
+  {
+    "id": "command",
+    "label": "Any command-line assistant (your subscription)",
+    "kind": "command",
+    "needsKey": false,
+    "defaultModel": "",
+    "models": [],
+    "hint": "Runs a command you choose (e.g. a Gemini or Codex CLI); the prompt goes in on stdin and the reply is read from stdout."
+  },
+  {
+    "id": "anthropic",
+    "label": "Anthropic API (Claude)",
+    "kind": "anthropic",
+    "baseUrl": "https://api.anthropic.com",
+    "keyEnv": "ANTHROPIC_API_KEY",
+    "needsKey": true,
+    "defaultModel": "claude-sonnet-5-5",
+    "models": [
+      "claude-haiku-5-5",
+      "claude-sonnet-5-5",
+      "claude-opus-5-5",
+      "claude-fable-5-1"
+    ],
+    "summaryModel": "claude-haiku-5-5",
+    "hint": "An API key from console.anthropic.com (billed per use)."
+  },
+  {
+    "id": "openai",
+    "label": "OpenAI API (ChatGPT models)",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.openai.com/v1",
+    "keyEnv": "OPENAI_API_KEY",
+    "needsKey": true,
+    "defaultModel": "gpt-4o",
+    "models": [
+      "gpt-4o",
+      "gpt-4o-mini"
+    ],
+    "summaryModel": "gpt-4o-mini",
+    "hint": "An API key from platform.openai.com (billed per use, separate from a ChatGPT subscription)."
+  },
+  {
+    "id": "gemini",
+    "label": "Google Gemini API",
+    "kind": "openai-compatible",
+    "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "keyEnv": "GEMINI_API_KEY",
+    "needsKey": true,
+    "defaultModel": "gemini-2.5-flash",
+    "models": [
+      "gemini-2.5-flash",
+      "gemini-2.5-pro"
+    ],
+    "summaryModel": "gemini-2.5-flash",
+    "hint": "A key from aistudio.google.com (has a free tier)."
+  },
+  {
+    "id": "openrouter",
+    "label": "OpenRouter (hundreds of models, one key)",
+    "kind": "openai-compatible",
+    "baseUrl": "https://openrouter.ai/api/v1",
+    "keyEnv": "OPENROUTER_API_KEY",
+    "needsKey": true,
+    "defaultModel": "openai/gpt-4o",
+    "models": [
+      "openai/gpt-4o",
+      "anthropic/claude-sonnet-4.5",
+      "google/gemini-2.5-flash"
+    ],
+    "hint": "A key from openrouter.ai; model names look like provider/model."
+  },
+  {
+    "id": "groq",
+    "label": "Groq",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.groq.com/openai/v1",
+    "keyEnv": "GROQ_API_KEY",
+    "needsKey": true,
+    "defaultModel": "llama-3.3-70b-versatile",
+    "models": [
+      "llama-3.3-70b-versatile"
+    ],
+    "hint": "A key from console.groq.com (very fast, has a free tier)."
+  },
+  {
+    "id": "mistral",
+    "label": "Mistral",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.mistral.ai/v1",
+    "keyEnv": "MISTRAL_API_KEY",
+    "needsKey": true,
+    "defaultModel": "mistral-large-latest",
+    "models": [
+      "mistral-large-latest",
+      "mistral-small-latest"
+    ],
+    "hint": "A key from console.mistral.ai."
+  },
+  {
+    "id": "deepseek",
+    "label": "DeepSeek",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.deepseek.com",
+    "keyEnv": "DEEPSEEK_API_KEY",
+    "needsKey": true,
+    "defaultModel": "deepseek-chat",
+    "models": [
+      "deepseek-chat"
+    ],
+    "hint": "A key from platform.deepseek.com (text only: no screenshots)."
+  },
+  {
+    "id": "xai",
+    "label": "xAI (Grok)",
+    "kind": "openai-compatible",
+    "baseUrl": "https://api.x.ai/v1",
+    "keyEnv": "XAI_API_KEY",
+    "needsKey": true,
+    "defaultModel": "grok-3",
+    "models": [
+      "grok-3"
+    ],
+    "hint": "A key from console.x.ai."
+  },
+  {
+    "id": "ollama",
+    "label": "Ollama (models running on this Mac)",
+    "kind": "openai-compatible",
+    "baseUrl": "http://localhost:11434/v1",
+    "needsKey": false,
+    "defaultModel": "llama3.2",
+    "models": [
+      "llama3.2"
+    ],
+    "hint": "Free and fully local: install ollama.com, then `ollama pull llama3.2`."
+  },
+  {
+    "id": "lmstudio",
+    "label": "LM Studio (models running on this Mac)",
+    "kind": "openai-compatible",
+    "baseUrl": "http://localhost:1234/v1",
+    "needsKey": false,
+    "defaultModel": "local-model",
+    "models": [],
+    "hint": "Free and fully local: start the server in LM Studio and load a model."
+  },
+  {
+    "id": "custom",
+    "label": "Any other OpenAI-compatible server",
+    "kind": "openai-compatible",
+    "needsKey": false,
+    "defaultModel": "",
+    "models": [],
+    "hint": "Set \"ai.baseUrl\" (and \"ai.apiKeyEnv\" if it needs a key) in settings.json."
+  }
+]

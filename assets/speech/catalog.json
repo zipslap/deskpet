@@ -1,0 +1,107 @@
+{
+ "version": 1,
+ "source": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/asr-models",
+ "downloadBase": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/",
+ "models": [
+  {
+   "id": "stt-en",
+   "family": "transducer",
+   "label": "English (accurate, 310 MB)",
+   "lang": "en",
+   "langName": "English",
+   "asset": "sherpa-onnx-streaming-zipformer-en-2023-06-26.tar.bz2",
+   "mb": 310,
+   "recommended": true
+  },
+  {
+   "id": "stt-en-small",
+   "family": "transducer",
+   "label": "English (small and fast)",
+   "lang": "en",
+   "langName": "English",
+   "asset": "sherpa-onnx-streaming-zipformer-en-20M-2023-02-17.tar.bz2",
+   "mb": 128,
+   "recommended": false
+  },
+  {
+   "id": "stt-en-kroko",
+   "family": "transducer",
+   "label": "English (Kroko, tiny)",
+   "lang": "en",
+   "langName": "English",
+   "asset": "sherpa-onnx-streaming-zipformer-en-kroko-2025-08-06.tar.bz2",
+   "mb": 57,
+   "recommended": false
+  },
+  {
+   "id": "stt-fr-kroko",
+   "family": "transducer",
+   "label": "French (Kroko, tiny)",
+   "lang": "fr",
+   "langName": "French",
+   "asset": "sherpa-onnx-streaming-zipformer-fr-kroko-2025-08-06.tar.bz2",
+   "mb": 57,
+   "recommended": true
+  },
+  {
+   "id": "stt-es-kroko",
+   "family": "transducer",
+   "label": "Spanish (Kroko)",
+   "lang": "es",
+   "langName": "Spanish",
+   "asset": "sherpa-onnx-streaming-zipformer-es-kroko-2025-08-06.tar.bz2",
+   "mb": 124,
+   "recommended": true
+  },
+  {
+   "id": "stt-de-kroko",
+   "family": "transducer",
+   "label": "German (Kroko, tiny)",
+   "lang": "de",
+   "langName": "German",
+   "asset": "sherpa-onnx-streaming-zipformer-de-kroko-2025-08-06.tar.bz2",
+   "mb": 58,
+   "recommended": true
+  },
+  {
+   "id": "stt-ru",
+   "family": "transducer",
+   "label": "Russian (Vosk, tiny)",
+   "lang": "ru",
+   "langName": "Russian",
+   "asset": "sherpa-onnx-streaming-zipformer-small-ru-vosk-int8-2025-08-16.tar.bz2",
+   "mb": 24,
+   "recommended": false
+  },
+  {
+   "id": "stt-zh",
+   "family": "transducer",
+   "label": "Chinese (Mandarin, small)",
+   "lang": "zh",
+   "langName": "Chinese",
+   "asset": "sherpa-onnx-streaming-zipformer-multi-zh-hans-int8-2023-12-13.tar.bz2",
+   "mb": 62,
+   "recommended": false
+  },
+  {
+   "id": "stt-ko",
+   "family": "transducer",
+   "label": "Korean",
+   "lang": "ko",
+   "langName": "Korean",
+   "asset": "sherpa-onnx-streaming-zipformer-korean-2024-06-16.tar.bz2",
+   "mb": 418,
+   "recommended": false
+  },
+  {
+   "id": "stt-fr",
+   "family": "transducer",
+   "label": "French (accurate, 398 MB)",
+   "lang": "fr",
+   "langName": "French",
+   "asset": "sherpa-onnx-streaming-zipformer-fr-2023-04-14.tar.bz2",
+   "mb": 398,
+   "recommended": false
+  }
+ ]
+}

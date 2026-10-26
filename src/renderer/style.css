@@ -1,0 +1,85 @@
+/* The 2D sprite's geometry comes from CSS variables set in sprite-view.ts (from assets/sprites/cat.json). */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pet {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  cursor: grab;
+}
+.pet.dragging { cursor: grabbing; }
+/* The 3D cat is drawn at a fraction of the window size and scaled up without smoothing, which is what makes it chunky. */
+#cat3d {
+  display: block;
+  width: 100px;
+  height: 100px;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.sprite {
+  --size: calc(var(--frame) * var(--scale) * 1px);
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  overflow: hidden;
+  cursor: grab;
+}
+/* The whole sheet, slid behind the 1-frame window of .sprite. Animating `transform` (not background-position)
+   keeps the frame stepping on the compositor: measured ~7% CPU -> ~0% for the same animation. */
+.sheet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--cols) * var(--size));
+  height: calc(var(--rows) * var(--size));
+  background-image: var(--sheet-url);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+  will-change: transform;
+}
+.sprite.facing-left {
+  transform: scaleX(-1);
+}
+.sprite.dragging {
+  cursor: grabbing;
+}
+
+/* Changing animation: the new sheet goes underneath at full strength and the old one dissolves on top of it, so poses
+   blend instead of snapping. Only opacity animates (compositor); the old layer is removed when it has faded. */
+.sheet.fading { opacity: 0; transition: opacity var(--blend-ms, 160ms) linear; }
+@media (prefers-reduced-motion: reduce) { .sheet.fading { transition: none; } }
+
+/* One block per sheet row. */
+.sheet.anim-idle { animation: idle     calc(var(--idle-frames) * var(--idle-ms) * 1ms)         steps(var(--idle-frames))     infinite; }
+.sheet.anim-walk { animation: walk     calc(var(--walk-frames) * var(--walk-ms) * 1ms)         steps(var(--walk-frames))     infinite; }
+.sheet.anim-curious { animation: curious  calc(var(--curious-frames) * var(--curious-ms) * 1ms)   steps(var(--curious-frames))  infinite; }
+.sheet.anim-thinking { animation: thinking calc(var(--thinking-frames) * var(--thinking-ms) * 1ms) steps(var(--thinking-frames)) infinite; }
+.sheet.anim-speaking { animation: speaking calc(var(--speaking-frames) * var(--speaking-ms) * 1ms) steps(var(--speaking-frames)) infinite; }
+.sheet.anim-listening { animation: listening calc(var(--listening-frames) * var(--listening-ms) * 1ms) steps(var(--listening-frames)) infinite; }
+.sheet.anim-sleeping { animation: sleeping calc(var(--sleeping-frames) * var(--sleeping-ms) * 1ms) steps(var(--sleeping-frames)) infinite; }
+
+@keyframes idle { from { transform: translate3d(0, calc(var(--idle-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--idle-frames) * var(--size) * -1), calc(var(--idle-row) * var(--size) * -1), 0); } }
+@keyframes walk { from { transform: translate3d(0, calc(var(--walk-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--walk-frames) * var(--size) * -1), calc(var(--walk-row) * var(--size) * -1), 0); } }
+@keyframes curious { from { transform: translate3d(0, calc(var(--curious-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--curious-frames) * var(--size) * -1), calc(var(--curious-row) * var(--size) * -1), 0); } }
+@keyframes thinking { from { transform: translate3d(0, calc(var(--thinking-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--thinking-frames) * var(--size) * -1), calc(var(--thinking-row) * var(--size) * -1), 0); } }
+@keyframes speaking { from { transform: translate3d(0, calc(var(--speaking-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--speaking-frames) * var(--size) * -1), calc(var(--speaking-row) * var(--size) * -1), 0); } }
+@keyframes sleeping { from { transform: translate3d(0, calc(var(--sleeping-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--sleeping-frames) * var(--size) * -1), calc(var(--sleeping-row) * var(--size) * -1), 0); } }
+@keyframes listening { from { transform: translate3d(0, calc(var(--listening-row) * var(--size) * -1), 0); } to { transform: translate3d(calc(var(--listening-frames) * var(--size) * -1), calc(var(--listening-row) * var(--size) * -1), 0); } }
+
+/* status badge (watching / paused / nudge): never takes the mouse, so it cannot get in the way of what is under the cat */
+.badge { position: fixed; top: 4px; right: 6px; font-size: 14px; line-height: 1; padding: 2px 4px; background: rgba(20, 33, 58, 0.78); color: #fff; pointer-events: none; box-shadow: 0 0 0 2px rgba(20, 48, 90, 0.9); }
+.badge[hidden] { display: none; }
+.badge[data-kind='nudge'] { background: #c2873b; }

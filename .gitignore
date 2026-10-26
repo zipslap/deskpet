@@ -1,0 +1,11 @@
+node_modules/
+out/
+dist/
+.DS_Store
+*.log
+.env*
+__pycache__/
+native/speech-helper
+native/window-helper
+native/window-level.node
+pet.log

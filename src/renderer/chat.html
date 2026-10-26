@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'"
+    />
+    <title>Chat</title>
+    <link rel="stylesheet" href="./chat.css" />
+  </head>
+  <body>
+    <main class="panel" role="dialog" aria-label="Chat with your pet">
+      <div id="grass" class="grass" aria-hidden="true">
+        <canvas id="grass-base"></canvas>
+      </div>
+      <div class="plate">
+      <header>
+        <span id="title" class="title">Chat</span>
+        <span id="status" class="status" aria-live="polite"></span>
+        <button id="pet-btn" type="button" class="icon" aria-label="Change your pet" aria-expanded="false" aria-controls="petbar" title="Change your pet: restyle it from a description and pictures">🐾</button>
+        <button id="data-btn" type="button" class="icon" aria-label="What the pet remembers" aria-expanded="false" aria-controls="databar" title="What the pet remembers about you (memory, conversation, summary)">🗂</button>
+        <button id="theme-btn" type="button" class="icon" aria-label="Customise the look" aria-expanded="false" aria-controls="themebar" title="Customise the look">🎨</button>
+        <button id="watch-btn" type="button" class="icon" aria-label="Watch for my rules" aria-pressed="false" title="Watch for my rules" hidden>👁</button>
+        <button id="mute" type="button" class="icon" aria-label="Mute spoken replies" aria-pressed="false" title="Spoken replies: on">🔊</button>
+        <button id="quit" type="button" class="icon" aria-label="Put the cat away (turns him fully off)" title="Put him away: quit completely (he can be opened again from his house)">🏠</button>
+        <button id="collapse" type="button" class="icon" aria-label="Minimise to the title bar" aria-pressed="false" title="Minimise (click again to restore)">▁</button>
+        <button id="close" type="button" class="icon" aria-label="Close chat" title="Close (Esc)">✕</button>
+      </header>
+      <section id="databar" class="databar" aria-label="What the pet remembers" hidden>
+        <h3>Memory <span id="data-memory-note" class="muted"></span></h3>
+        <ul id="data-memory" class="datalist"></ul>
+        <pre id="data-memory-view" class="dataview" hidden></pre>
+        <h3>This conversation</h3>
+        <p id="data-convo" class="muted"></p>
+        <pre id="data-summary" class="dataview" hidden></pre>
+        <div class="themeactions">
+          <button id="data-forget" type="button" class="pixbtn" hidden>Forget summary</button>
+          <button id="data-newchat" type="button" class="pixbtn">Clear conversation</button>
+          <button id="data-reveal" type="button" class="pixbtn">Open memory folder</button>
+          <button id="data-done" type="button" class="pixbtn">Done</button>
+        </div>
+        <p class="muted">Screenshots are never saved; they exist only while a message is being sent.</p>
+      </section>
+      <section id="petbar" class="databar petbar" aria-label="Change your pet" hidden>
+        <h3>Change your pet <span id="pet-name" class="muted"></span></h3>
+        <p class="muted">Say what you want, and add pictures for inspiration. For example: “turn my pet into a mermaid, like these pictures” or “change my cat’s skin to green”.</p>
+        <textarea id="pet-text" rows="3" maxlength="2000" placeholder="Turn my pet into…" aria-label="How to change the pet"></textarea>
+        <div id="pet-thumbs" class="thumbs" aria-label="Pictures to use"></div>
+        <div class="themeactions">
+          <button id="pet-add" type="button" class="pixbtn">Add pictures…</button>
+          <input id="pet-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
+          <button id="pet-go" type="button" class="pixbtn">Transform</button>
+        </div>
+        <p id="pet-msg" class="muted" aria-live="polite"></p>
+        <div class="muted">Ready-made:</div>
+        <div id="pet-presets" class="presetrow"></div>
+        <div class="themeactions">
+          <button id="pet-undo" type="button" class="pixbtn">Undo</button>
+          <button id="pet-reset" type="button" class="pixbtn">Default cat</button>
+          <button id="pet-done" type="button" class="pixbtn">Done</button>
+        </div>
+      </section>
+      <div id="modelbar" class="modelbar" hidden>
+        <label>Model <select id="model" aria-label="Model"></select></label>
+        <label id="effort-label" hidden>Effort <select id="effort" aria-label="Reasoning effort" title="How hard the model thinks before answering"></select></label>
+        <button id="newchat" type="button" class="pixbtn" title="Start a fresh conversation (/new)">New chat</button>
+      </div>
+      <section id="themebar" class="themebar" aria-label="Customise the look" hidden>
+        <div class="presets" role="group" aria-label="Presets"></div>
+        <label><span>Colour</span><input id="t-hue" type="range" min="-180" max="180" step="1" /><output id="o-hue"></output></label>
+        <label><span>Richness</span><input id="t-sat" type="range" min="0" max="200" step="1" /><output id="o-sat"></output></label>
+        <label><span>Brightness</span><input id="t-bright" type="range" min="50" max="150" step="1" /><output id="o-bright"></output></label>
+        <label><span>Opacity</span><input id="t-opacity" type="range" min="20" max="100" step="1" /><output id="o-opacity"></output></label>
+        <div class="themeactions"><button id="t-reset" type="button" class="pixbtn">Reset</button><button id="t-done" type="button" class="pixbtn">Done</button></div>
+      </section>
+      <ol id="log" class="log" aria-live="polite"></ol>
+      <div id="empty" class="empty">
+        <div id="empty-mock"><p>Say hello. This is the offline demo, so replies are canned and nothing leaves this computer.</p><p>To talk to a real AI (Claude, ChatGPT, Gemini, a local model...), run <code>npm run setup</code> in the DeskPet folder. The README lists every option.</p></div>
+        <div id="empty-ai" hidden><p>Just talk, as you would to the assistant anywhere else. Short questions get short answers; ask for depth and you get depth.</p><p>Your messages go to the AI service you connected. The conversation is kept on this Mac between sessions (<code>/new</code> starts over); <code>/help</code> lists commands.</p></div>
+      </div>
+      <div id="voicebar" class="voicebar" role="status" aria-live="polite" hidden>
+        <span id="voicetext"></span>
+        <span id="meter" class="meter" aria-hidden="true"><i id="meterfill"></i></span>
+        <button id="settings" type="button" class="link" hidden>Open privacy settings</button>
+      </div>
+      <div id="watchbar" class="voicebar" role="status" aria-live="polite" hidden>
+        <span id="watchtext"></span>
+        <button id="watch-off" type="button" class="link">Pause</button>
+      </div>
+      <div id="nudgebar" class="voicebar nudge" role="alert" hidden>
+        <span id="nudgetext"></span>
+        <button id="nudge-look" type="button" class="pixbtn">Look</button>
+        <button id="nudge-no" type="button" class="pixbtn">Not now</button>
+      </div>
+      <div id="screenbar" class="voicebar" role="status" aria-live="polite" hidden>
+        <span id="screentext"></span>
+        <button id="screen-settings" type="button" class="link" hidden>Open privacy settings</button>
+      </div>
+      <form id="form" class="composer" autocomplete="off">
+        <textarea id="input" rows="1" maxlength="20000" placeholder="Message… or press the mic" aria-label="Message"></textarea>
+        <button id="cam" type="button" class="mic" aria-label="Share a screenshot with my next message" aria-pressed="false" title="Share a screenshot with your next message" hidden>📷</button>
+        <button id="mic" type="button" class="mic" aria-label="Start listening" title="Listen (push to talk)">🎤</button>
+        <button id="action" type="submit" class="send">Send</button>
+      </form>
+      <div id="grip" class="grip" role="separator" aria-label="Drag to resize the panel" title="Drag to resize"></div>
+      </div>
+    </main>
+    <script type="module" src="./chat.ts"></script>
+  </body>
+</html>

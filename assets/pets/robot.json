@@ -1,0 +1,302 @@
+{
+ "name": "Robot",
+ "palette": {
+  "fur": "#8c98ab",
+  "furHi": "#c5cedb",
+  "chest": "#ffd24a",
+  "pink": "#ff5c5c",
+  "nose": "#ff5c5c",
+  "mouth": "#2b2f38",
+  "eye": "#52e5ff",
+  "pupil": "#06222c"
+ },
+ "parts": {
+  "torso": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      1.0,
+      0
+     ],
+     "radii": [
+      2.4,
+      1.9,
+      2.0
+     ],
+     "color": "fur"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      3.6,
+      0
+     ],
+     "radii": [
+      2.2,
+      2.5,
+      1.8
+     ],
+     "color": "fur"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      3.9,
+      1.7
+     ],
+     "radii": [
+      1.2,
+      1.2,
+      0.3
+     ],
+     "color": "chest"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      5.6,
+      0
+     ],
+     "radii": [
+      2.5,
+      0.8,
+      1.6
+     ],
+     "color": "furHi"
+    }
+   ]
+  },
+  "head": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      0.3,
+      0
+     ],
+     "radii": [
+      1.2,
+      1.2,
+      1.1
+     ],
+     "color": "furHi"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      3.2,
+      0.2
+     ],
+     "radii": [
+      3.5,
+      3.0,
+      3.0
+     ],
+     "color": "fur"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      1.9,
+      2.6
+     ],
+     "radii": [
+      1.8,
+      0.9,
+      0.5
+     ],
+     "color": "furHi"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      6.8,
+      0
+     ],
+     "radii": [
+      0.35,
+      1.0,
+      0.35
+     ],
+     "color": "furHi"
+    },
+    {
+     "kind": "ellipsoid",
+     "center": [
+      0,
+      8.2,
+      0
+     ],
+     "radii": [
+      0.9,
+      0.9,
+      0.9
+     ],
+     "color": "pink"
+    }
+   ]
+  },
+  "ear": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      0.6,
+      0
+     ],
+     "radii": [
+      1.0,
+      0.6,
+      1.0
+     ],
+     "color": "furHi"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      1.4,
+      0
+     ],
+     "radii": [
+      0.6,
+      0.4,
+      0.6
+     ],
+     "color": "fur"
+    }
+   ]
+  },
+  "upperArm": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -1.4,
+      0
+     ],
+     "radii": [
+      0.9,
+      1.6,
+      0.9
+     ],
+     "color": "fur"
+    }
+   ]
+  },
+  "foreArm": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -1.3,
+      0
+     ],
+     "radii": [
+      0.8,
+      1.5,
+      0.8
+     ],
+     "color": "fur"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -2.6,
+      0.1
+     ],
+     "radii": [
+      1.0,
+      0.6,
+      1.0
+     ],
+     "color": "furHi"
+    }
+   ]
+  },
+  "leg": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -1.6,
+      0
+     ],
+     "radii": [
+      1.1,
+      2.0,
+      1.2
+     ],
+     "color": "fur"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -3.8,
+      0
+     ],
+     "radii": [
+      0.8,
+      1.8,
+      0.8
+     ],
+     "color": "furHi"
+    },
+    {
+     "kind": "box",
+     "center": [
+      0,
+      -4.9,
+      0.8
+     ],
+     "radii": [
+      1.0,
+      0.5,
+      1.6
+     ],
+     "color": "fur"
+    }
+   ]
+  },
+  "tailSegment": {
+   "replace": true,
+   "shapes": [
+    {
+     "kind": "box",
+     "center": [
+      0,
+      0,
+      0.8
+     ],
+     "radii": [
+      0.6,
+      0.6,
+      0.8
+     ],
+     "color": "furHi"
+    }
+   ]
+  }
+ }
+}

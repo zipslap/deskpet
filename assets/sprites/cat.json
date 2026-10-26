@@ -1,0 +1,42 @@
+{
+  "frame": 40,
+  "cols": 12,
+  "rows": {
+    "idle": {
+      "row": 0,
+      "frames": 12,
+      "ms": 130
+    },
+    "walk": {
+      "row": 1,
+      "frames": 10,
+      "ms": 90
+    },
+    "curious": {
+      "row": 2,
+      "frames": 8,
+      "ms": 120
+    },
+    "thinking": {
+      "row": 3,
+      "frames": 8,
+      "ms": 220
+    },
+    "speaking": {
+      "row": 4,
+      "frames": 8,
+      "ms": 90
+    },
+    "sleeping": {
+      "row": 5,
+      "frames": 8,
+      "ms": 420
+    },
+    "listening": {
+      "row": 6,
+      "frames": 8,
+      "ms": 160
+    }
+  },
+  "groundMarginRows": 1
+}
