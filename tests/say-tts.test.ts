@@ -1,10 +1,11 @@
+import { fileURLToPath } from 'node:url'
 import { chmodSync, mkdtempSync, readFileSync, rmSync, existsSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { createSystemTts, MAX_UTTERANCE_CHARS, SayTts, sapiRate, speakable, systemTtsPlan } from '../src/services/voice/say-tts'
 
-const FAKE = new URL('../tools/fake-say.mjs', import.meta.url).pathname
+const FAKE = fileURLToPath(new URL('../tools/fake-say.mjs', import.meta.url))
 let dir: string
 let logFile: string
 const calls = (): Array<{ args: string[]; text: string }> =>
@@ -45,7 +46,7 @@ describe('speakable()', () => {
 })
 
 describe('SayTts (against a fake `say`)', () => {
-  const make = (extra: Partial<ConstructorParameters<typeof SayTts>[0]> = {}) => new SayTts({ voice: '', rate: 200, bin: FAKE, ...extra })
+  const make = (extra: Partial<ConstructorParameters<typeof SayTts>[0]> = {}) => new SayTts({ voice: '', rate: 200, bin: process.execPath, binArgs: [FAKE], ...extra })
 
   it('speaks queued utterances in order and reports speaking true then false', async () => {
     const tts = make()

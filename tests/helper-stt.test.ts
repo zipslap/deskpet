@@ -1,8 +1,9 @@
+import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { HelperStt, parseHelperLine } from '../src/services/voice/helper-stt'
 import type { SttEndReason, SttError, SttSession } from '../src/services/voice/types'
 
-const FAKE = new URL('../tools/fake-stt-helper.mjs', import.meta.url).pathname
+const FAKE = fileURLToPath(new URL('../tools/fake-stt-helper.mjs', import.meta.url))
 const opts = { locale: 'en-US', allowServerRecognition: false, maxSeconds: 30, silenceMs: 1800 }
 
 describe('parseHelperLine (the helper is untrusted input)', () => {
@@ -40,7 +41,7 @@ function run(mode: string, o: Partial<typeof opts> = {}, killAfterMs = 1500) {
   const errors: SttError[] = []
   let ended: SttEndReason | null = null
   let endedCount = 0
-  const stt = new HelperStt({ helperPath: FAKE, killAfterMs })
+  const stt = new HelperStt({ helperPath: process.execPath, helperArgs: [FAKE], killAfterMs })
   const session: SttSession = stt.start(
     { ...opts, ...o },
     {
@@ -151,10 +152,10 @@ describe('HelperStt (against the fake helper)', () => {
 describe('HelperStt.status', () => {
   it('reports permissions from the helper without listening', async () => {
     process.env['PET_FAKE_STT_MODE'] = 'not-authorized'
-    const s = await new HelperStt({ helperPath: FAKE }).status('en-US')
+    const s = await new HelperStt({ helperPath: process.execPath, helperArgs: [FAKE] }).status('en-US')
     expect(s).toMatchObject({ installed: true, mic: 'notDetermined', speech: 'notDetermined', onDevice: true })
     process.env['PET_FAKE_STT_MODE'] = 'ok'
-    expect(await new HelperStt({ helperPath: FAKE }).status('en-US')).toMatchObject({ installed: true, mic: 'authorized' })
+    expect(await new HelperStt({ helperPath: process.execPath, helperArgs: [FAKE] }).status('en-US')).toMatchObject({ installed: true, mic: 'authorized' })
   })
   it('says "not installed" for a missing helper', async () => {
     expect(await new HelperStt({ helperPath: '/nonexistent/speech-helper' }).status('en-US')).toMatchObject({ installed: false })

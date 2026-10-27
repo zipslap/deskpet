@@ -1,15 +1,15 @@
-import { spawn, type ChildProcess } from 'node:child_process'
+import type { ChildProcess } from 'node:child_process'
 import { mkdirSync } from 'node:fs'
 import { StringDecoder } from 'node:string_decoder'
 import { imagesOf, ProviderError, type AssistantContext, type ChatProvider } from './provider'
 import { renderPrompt } from './prompt'
-import { resolveCommand } from './claude-cli-provider'
+import { launch, resolveCommand, stopProcess } from './launch'
 
 /**
  * Runs any command-line assistant you are already signed in to (a Gemini or Codex CLI, `ollama run`, a script of your own...).
  * The whole prompt (instructions, then the conversation) is written to the command's stdin and its stdout is the reply,
  * streamed as it arrives. If one of the arguments contains `{prompt}` the prompt is put there instead and stdin is left empty.
- * `{model}` in an argument is replaced by the current model name. No shell is involved: arguments are passed as given.
+ * `{model}` in an argument is replaced by the current model name. No shell is involved (only a Windows .cmd launcher goes through cmd.exe, with strict quoting).
  * The command runs in an empty app-owned folder with your normal environment, so its own sign-in keeps working.
  */
 
@@ -63,7 +63,12 @@ export class CommandProvider implements ChatProvider {
 
     const prompt = `${o.systemPrompt({ screen: false })}\n\n---\n\n${renderPrompt(context?.history ?? [], message, o.maxPromptChars)}`
     const { args, promptInArgs } = fillArgs(o.args, o.model(), prompt)
-    const proc = spawn(bin, args, { cwd: o.workdir, env, stdio: [promptInArgs ? 'ignore' : 'pipe', 'pipe', 'pipe'] })
+    let proc: ChildProcess
+    try {
+      proc = launch(bin, args, { cwd: o.workdir, env, stdio: [promptInArgs ? 'ignore' : 'pipe', 'pipe', 'pipe'] })
+    } catch (e) {
+      throw new ProviderError(`Couldn't start "${o.command}" (${oneLine((e as Error).message, 100)}).`)
+    }
     this.live.add(proc)
     const exited = new Promise<{ error: Error } | { code: number | null; signal: NodeJS.Signals | null }>((resolve) => {
       proc.once('error', (error) => resolve({ error }))
@@ -118,9 +123,9 @@ export class CommandProvider implements ChatProvider {
 
   private kill(proc: ChildProcess): void {
     if (proc.exitCode !== null || proc.signalCode !== null) return
-    proc.kill('SIGTERM')
+    stopProcess(proc, 'SIGTERM')
     const t = setTimeout(() => {
-      if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL')
+      if (proc.exitCode === null && proc.signalCode === null) stopProcess(proc, 'SIGKILL')
     }, this.opts.killGraceMs ?? 2000)
     t.unref()
     proc.once('close', () => clearTimeout(t))

@@ -14,12 +14,15 @@ import {
 } from '../src/services/ai/claude-cli-provider'
 import { buildSystemPrompt, renderPrompt } from '../src/services/ai/prompt'
 import { ProviderError } from '../src/services/ai/provider'
+import { fakeCommand } from './helpers/fake-command'
 
-const FAKE = resolve(__dirname, '../tools/fake-claude.mjs')
+const FAKE_SCRIPT = resolve(__dirname, '../tools/fake-claude.mjs')
 let dir: string
+let FAKE: string // (on Windows a .cmd launcher beside the fake, like an npm-installed claude)
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'pet-claude-test-'))
+  FAKE = fakeCommand(FAKE_SCRIPT, join(dir, 'bin'), 'claude')
 })
 afterEach(() => rmSync(dir, { recursive: true, force: true }))
 
@@ -216,10 +219,13 @@ describe('resolveCommand', () => {
     expect(resolveCommand(join(dir, 'plain'), {})).toBeNull()
   })
   it('finds a bare name on PATH', () => {
-    writeFileSync(join(dir, 'fakeclaudecmd'), '#!/bin/sh\n')
-    chmodSync(join(dir, 'fakeclaudecmd'), 0o755)
-    expect(resolveCommand('fakeclaudecmd', { PATH: `/nonexistent:${dir}`, HOME: dir })).toBe(join(dir, 'fakeclaudecmd'))
-    expect(resolveCommand('definitely-not-installed-xyz', { PATH: '/nonexistent', HOME: dir })).toBeNull()
+    const win = process.platform === 'win32'
+    const file = join(dir, win ? 'fakeclaudecmd.cmd' : 'fakeclaudecmd') // (Windows finds `fakeclaudecmd` by its extension)
+    writeFileSync(file, win ? '@echo off\r\n' : '#!/bin/sh\n')
+    chmodSync(file, 0o755)
+    const sep = win ? ';' : ':'
+    expect(resolveCommand('fakeclaudecmd', { PATH: `${join(dir, 'nonexistent')}${sep}${dir}`, HOME: dir })).toBe(file)
+    expect(resolveCommand('definitely-not-installed-xyz', { PATH: join(dir, 'nonexistent'), HOME: dir })).toBeNull()
   })
 })
 

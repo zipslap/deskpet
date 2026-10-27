@@ -1,10 +1,12 @@
-import { spawn, type ChildProcess } from 'node:child_process'
-import { accessSync, constants, mkdirSync, writeFileSync } from 'node:fs'
-import { homedir } from 'node:os'
-import { delimiter, isAbsolute, join } from 'node:path'
+import type { ChildProcess } from 'node:child_process'
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { StringDecoder } from 'node:string_decoder'
 import { imagesOf, ProviderError, type ChatTurn, type AssistantContext, type ChatProvider } from './provider'
 import { buildSystemPrompt, renderPrompt } from './prompt'
+import { launch, launchPlan, resolveCommand, stopProcess } from './launch'
+
+export { resolveCommand }
 
 /**
  * Talks to Claude by running the user's own, unmodified `claude` command (Claude Code) once per message in print mode.
@@ -62,13 +64,14 @@ export function buildEnv(source: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
 }
 
 /** `streamInput`: the message goes in as one stream-json line (needed to carry an image) instead of plain text on stdin. */
-export function buildArgs(model: string, promptFile: string, effort?: string, streamInput = false): string[] {
+/** `mcpConfig`: a file holding the empty server list, for launchers that cannot carry a quote character in an argument (Windows .cmd). */
+export function buildArgs(model: string, promptFile: string, effort?: string, streamInput = false, mcpConfig = '{"mcpServers":{}}'): string[] {
   return [
     '-p',
     '--model', model,
     ...(effort ? ['--effort', effort] : []),
     '--tools', '',
-    '--strict-mcp-config', '--mcp-config', '{"mcpServers":{}}',
+    '--strict-mcp-config', '--mcp-config', mcpConfig,
     '--setting-sources', '',
     '--disable-slash-commands',
     '--no-session-persistence',
@@ -145,24 +148,6 @@ export function classifyError(raw: string): string {
 
 const abortError = (): Error => Object.assign(new Error('Aborted'), { name: 'AbortError' })
 
-function isExecutable(path: string): boolean {
-  try {
-    accessSync(path, constants.X_OK)
-    return true
-  } catch {
-    return false
-  }
-}
-
-/** Where to look for the `claude` command: the given absolute path, else PATH plus the usual install folders (a GUI launch has a short PATH). */
-export function resolveCommand(command: string, env: NodeJS.ProcessEnv): string | null {
-  if (isAbsolute(command)) return isExecutable(command) ? command : null
-  const home = env['HOME'] ?? homedir()
-  const dirs = [...(env['PATH'] ?? '').split(delimiter), join(home, '.local/bin'), join(home, '.claude/local'), '/opt/homebrew/bin', '/usr/local/bin']
-  for (const d of dirs) if (d && isExecutable(join(d, command))) return join(d, command)
-  return null
-}
-
 // ---------- the provider ----------
 
 type Exit = { error: Error } | { code: number | null; signal: NodeJS.Signals | null }
@@ -209,7 +194,21 @@ export class ClaudeCliProvider implements ChatProvider {
     const model = typeof this.opts.model === 'function' ? this.opts.model() : this.opts.model
     const images = imagesOf(context)
     const image = images.length > 0
-    const proc = spawn(bin, buildArgs(model, promptFile, this.opts.effort?.(), Boolean(image)), { cwd: this.opts.workdir, env: this.env, stdio: ['pipe', 'pipe', 'pipe'] })
+    let mcpConfig: string | undefined
+    if (launchPlan(bin, [], this.env).verbatim) {
+      mcpConfig = join(this.opts.workdir, 'no-mcp.json')
+      try {
+        writeFileSync(mcpConfig, '{"mcpServers":{}}', { mode: 0o600 })
+      } catch (e) {
+        throw new ProviderError(`Couldn't write the settings file (${oneLine((e as Error).message, 100)}).`)
+      }
+    }
+    let proc: ChildProcess
+    try {
+      proc = launch(bin, buildArgs(model, promptFile, this.opts.effort?.(), Boolean(image), mcpConfig), { cwd: this.opts.workdir, env: this.env, stdio: ['pipe', 'pipe', 'pipe'] })
+    } catch (e) {
+      throw new ProviderError(`Couldn't start the claude command (${oneLine((e as Error).message, 100)}).`)
+    }
     this.live.add(proc)
     const exited = new Promise<Exit>((resolve) => {
       proc.once('error', (error) => resolve({ error }))
@@ -304,9 +303,9 @@ export class ClaudeCliProvider implements ChatProvider {
   /** SIGTERM now, SIGKILL if it has not gone after the grace period. */
   private kill(proc: ChildProcess): void {
     if (proc.exitCode !== null || proc.signalCode !== null) return
-    proc.kill('SIGTERM')
+    stopProcess(proc, 'SIGTERM')
     const t = setTimeout(() => {
-      if (proc.exitCode === null && proc.signalCode === null) proc.kill('SIGKILL')
+      if (proc.exitCode === null && proc.signalCode === null) stopProcess(proc, 'SIGKILL')
     }, this.opts.killGraceMs ?? 2000)
     t.unref()
     proc.once('close', () => clearTimeout(t))
@@ -343,7 +342,12 @@ export class ClaudeCliProvider implements ChatProvider {
   private run(bin: string, args: string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
     return new Promise((resolve) => {
       let out = ''
-      const proc = spawn(bin, args, { cwd: this.opts.workdir, env: this.env, stdio: ['ignore', 'pipe', 'ignore'] })
+      let proc: ChildProcess
+      try {
+        proc = launch(bin, args, { cwd: this.opts.workdir, env: this.env, stdio: ['ignore', 'pipe', 'ignore'] })
+      } catch {
+        return resolve('')
+      }
       this.live.add(proc)
       const finish = (): void => {
         clearTimeout(timer)

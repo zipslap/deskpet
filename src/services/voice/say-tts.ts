@@ -10,6 +10,8 @@ export interface SayOptions {
   rate: number
   /** The `say` executable (or the system speech program on another OS). Overridable for tests. */
   bin?: string
+  /** Put before the arguments, to run a script through an interpreter (`bin` = node, `binArgs` = [script]). Tests only. */
+  binArgs?: string[]
   /** Arguments for the program; the text always goes in on stdin. Default: the macOS `say` ones. */
   args?: string[]
   /** Called with a short message if `say` cannot be started. */
@@ -85,7 +87,7 @@ export class SayTts implements TextToSpeech {
     const args = this.opts.args ?? ['-r', String(Math.round(this.opts.rate)), ...(this.opts.voice ? ['-v', this.opts.voice] : []), '-f', '-']
     let p: ChildProcess
     try {
-      p = spawn(this.bin, args, { stdio: ['pipe', 'ignore', 'pipe'], windowsHide: true })
+      p = spawn(this.bin, [...(this.opts.binArgs ?? []), ...args], { stdio: ['pipe', 'ignore', 'pipe'], windowsHide: true })
     } catch (e) {
       this.fail(`Could not start speech: ${(e as Error).message}`)
       return

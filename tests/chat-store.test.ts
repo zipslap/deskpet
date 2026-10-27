@@ -23,7 +23,7 @@ describe('history', () => {
     const p = join(dir, 'history.json')
     saveHistory(p, msgs)
     expect(loadHistory(p).map((m) => [m.role, m.text])).toEqual([['user', 'hello'], ['assistant', 'hi there']])
-    expect(statSync(p).mode & 0o077).toBe(0)
+    if (process.platform !== 'win32') expect(statSync(p).mode & 0o077).toBe(0) // (Windows has no permission bits)
   })
   it('a missing, corrupt or odd file is an empty conversation', () => {
     expect(loadHistory(join(dir, 'none.json'))).toEqual([])

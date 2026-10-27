@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
 import { inflateSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
@@ -30,7 +31,7 @@ function decodePng(path: string): { w: number; h: number; rgba: Uint8Array } {
   return { w, h, rgba }
 }
 
-const sheet = decodePng(new URL('../assets/sprites/cat.png', import.meta.url).pathname)
+const sheet = decodePng(fileURLToPath(new URL('../assets/sprites/cat.png', import.meta.url)))
 const mask = (name: (typeof ANIM_NAMES)[number]): Uint8Array => buildRowMask(sheet.rgba, sheet.w, ROWS[name].row, ROWS[name].frames, FRAME)
 const idle = mask('idle')
 const walk = mask('walk')
