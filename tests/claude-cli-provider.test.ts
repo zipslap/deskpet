@@ -24,7 +24,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'pet-claude-test-'))
   FAKE = fakeCommand(FAKE_SCRIPT, join(dir, 'bin'), 'claude')
 })
-afterEach(() => rmSync(dir, { recursive: true, force: true }))
+afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })) // (Windows keeps a folder locked while its process is still going down)
 
 const setCfg = (cfg: Record<string, unknown>): void => writeFileSync(join(dir, 'fake-claude.json'), JSON.stringify(cfg))
 const calls = (): Array<{ argv: string[]; envKeys: string[]; cwd: string; stdin: string; pid: number }> =>
@@ -253,8 +253,11 @@ describe('ClaudeCliProvider', () => {
     setCfg({ mode: 'ok' })
     await collect(provider({ model: 'claude-haiku-5-5' }))
     const [c] = runCalls()
-    expect(c!.argv).toEqual(buildArgs('claude-haiku-5-5', join(dir, 'system-prompt.txt')))
-    expect(c!.cwd).toBe(dir.startsWith('/private') ? dir : (await import('node:fs')).realpathSync(dir))
+    // (a Windows .cmd launcher cannot carry the inline JSON, so it gets the same empty list as a file)
+    const mcp = process.platform === 'win32' ? join(dir, 'no-mcp.json') : undefined
+    expect(c!.argv).toEqual(buildArgs('claude-haiku-5-5', join(dir, 'system-prompt.txt'), undefined, false, mcp))
+    const { realpathSync } = await import('node:fs')
+    expect(realpathSync.native(c!.cwd)).toBe(realpathSync.native(dir))
   })
 
   it('gives the child no API key, cloud switch or unrelated variable even if the app has them', async () => {

@@ -10,7 +10,7 @@ let dir: string
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'deskpet-cmd-'))
 })
-afterEach(() => rmSync(dir, { recursive: true, force: true }))
+afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 }))
 
 const make = (over: Partial<CommandProviderOptions> = {}, mode = 'echo'): CommandProvider =>
   new CommandProvider({
