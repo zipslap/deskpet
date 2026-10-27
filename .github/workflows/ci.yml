@@ -42,6 +42,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Download the Electron binary (npm ci did not run its install script on the runner)
+        run: node node_modules/electron/install.js
       - run: npx electron-vite build
       - name: Linux only - let Electron run without a setuid sandbox on the runner
         if: runner.os == 'Linux'
