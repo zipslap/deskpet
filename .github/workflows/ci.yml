@@ -24,3 +24,31 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+
+  smoke:
+    # Launches the real app, clicks the cat, sends a message to the built-in mock AI and quits (tools/e2e-smoke.mjs).
+    name: app smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx electron-vite build
+      - name: Linux only - let Electron run without a setuid sandbox on the runner
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+      - name: Run (Linux needs a virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node tools/e2e-smoke.mjs
+      - name: Run
+        if: runner.os != 'Linux'
+        run: node tools/e2e-smoke.mjs

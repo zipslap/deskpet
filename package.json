@@ -24,7 +24,8 @@
     "setup": "node tools/setup.mjs",
     "voices": "node tools/voices.mjs",
     "e2e:pet": "npm run helper && electron-vite build && node tools/e2e-pet.mjs",
-    "speech": "node tools/speech.mjs"
+    "speech": "node tools/speech.mjs",
+    "e2e:smoke": "npm run helper && electron-vite build && node tools/e2e-smoke.mjs"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
