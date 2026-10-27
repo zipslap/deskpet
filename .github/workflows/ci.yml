@@ -8,9 +8,6 @@ jobs:
   test:
     name: typecheck + unit tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    # The Windows job is informational until it has been run on a real Windows machine: a few tests start fake helper programs
-    # through shebang lines, which Windows does not honour.
-    continue-on-error: ${{ matrix.os == 'windows-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,7 +26,6 @@ jobs:
     # Launches the real app, clicks the cat, sends a message to the built-in mock AI and quits (tools/e2e-smoke.mjs).
     name: app smoke test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     timeout-minutes: 15
     strategy:
       fail-fast: false
