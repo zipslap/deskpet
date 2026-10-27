@@ -110,8 +110,10 @@ try {
 
   // ---- the panel: opens near the cat, an ordinary window in desktop mode ----
   ok(await openChat(), 'clicking the cat opens the chat')
+  // the OS window list can lag a moment behind the panel opening
+  for (let i = 0; i < 20 && !chatWin(windows()); i++) await sleep(150)
   ws = windows()
-  ok(chatWin(ws)?.layer === 0, 'in desktop mode the chat panel is an ordinary window too', JSON.stringify(chatWin(ws)))
+  ok(chatWin(ws)?.layer === 0, 'in desktop mode the chat panel is an ordinary window too', JSON.stringify(ws))
   const [w0, h0] = await outer()
   ok(w0 === 460 && h0 === 600, 'it opens at the default size', `${w0}x${h0}`)
 
