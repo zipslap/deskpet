@@ -54,3 +54,29 @@ describe('resolveCommand on Windows rules', () => {
     expect(resolveCommand(cmd, {}, 'win32')).toBe(cmd)
   })
 })
+
+// Windows only: a .cmd shim starts the real program as a child of cmd.exe, and stopping cmd.exe alone would leave that program running.
+describe.runIf(process.platform === 'win32')('a .cmd launcher on Windows', () => {
+  it('runs through cmd.exe and stopProcess ends the whole tree', async () => {
+    const { launch, stopProcess } = await import('../src/services/ai/launch')
+    const pidFile = join(dir, 'child.pid')
+    const script = join(dir, 'sleeper.mjs')
+    writeFileSync(script, `import { writeFileSync } from 'node:fs'; writeFileSync(${JSON.stringify(pidFile)}, String(process.pid)); setInterval(() => {}, 1000)`)
+    const cmd = join(dir, 'sleeper.cmd')
+    writeFileSync(cmd, `@echo off\r\n"${process.execPath}" "${script}" %*\r\n`)
+    const proc = launch(cmd, ['--model', 'haiku', ''], { cwd: dir, env: process.env, stdio: 'ignore' })
+    const { existsSync, readFileSync } = await import('node:fs')
+    const until = async (f: () => boolean, ms = 8000): Promise<boolean> => {
+      for (const end = Date.now() + ms; Date.now() < end; await new Promise((r) => setTimeout(r, 50))) if (f()) return true
+      return false
+    }
+    expect(await until(() => existsSync(pidFile) && readFileSync(pidFile, 'utf8').length > 0)).toBe(true)
+    const childPid = Number(readFileSync(pidFile, 'utf8'))
+    const alive = (): boolean => {
+      try { process.kill(childPid, 0); return true } catch { return false }
+    }
+    expect(alive()).toBe(true)
+    stopProcess(proc)
+    expect(await until(() => !alive(), 5000)).toBe(true)
+  })
+})

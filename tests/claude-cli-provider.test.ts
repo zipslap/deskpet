@@ -24,7 +24,14 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'pet-claude-test-'))
   FAKE = fakeCommand(FAKE_SCRIPT, join(dir, 'bin'), 'claude')
 })
-afterEach(() => rmSync(dir, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 })) // (Windows keeps a folder locked while its process is still going down)
+afterEach(() => {
+  try {
+    rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 200 })
+  } catch (e) {
+    // Windows keeps a folder locked while the process that used it is still going down; the temp folder is harmless to leave
+    if (process.platform !== 'win32') throw e
+  }
+})
 
 const setCfg = (cfg: Record<string, unknown>): void => writeFileSync(join(dir, 'fake-claude.json'), JSON.stringify(cfg))
 const calls = (): Array<{ argv: string[]; envKeys: string[]; cwd: string; stdin: string; pid: number }> =>
