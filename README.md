@@ -2,8 +2,7 @@
 
 ![DeskPet](docs/screenshots/deskpet-hero.png)
 
-> **Beta, not a finished product.** DeskPet is an early, actively changing project. It works well on macOS, where it has been tested and used; the Windows and Linux support is
-> new and has not yet been run on real machines. Expect rough edges, changing settings, and the occasional bug, and please [report what you find](../../issues).
+> **Beta, not a finished product.** DeskPet is an early, actively changing project. It works well on macOS, where it has been tested and used. On Windows and Linux the app is checked automatically on every change (it starts, draws the cat, opens the chat, gets a reply and quits), but it has not yet been used on a real desktop there. Expect rough edges, changing settings, and the occasional bug, and please [report what you find](../../issues).
 
 A small 3D voxel cat that lives on your desktop, walks around, naps, eats the occasional fish, and is a **face for any AI**.
 Click it to chat, or talk out loud and hear it answer in an offline neural voice. Tell it **"turn my pet into a mermaid"** (with pictures
@@ -82,7 +81,7 @@ and only a valid spec is drawn. It is saved in `pet.json` in the data folder and
 * **Models:** the panel's Model dropdown lists suggestions plus whatever the service reports; `/model <any name>` or saying "switch to gpt-4o" uses any model the service accepts.
   `ai.models` adds your own names. The choice is remembered per service.
 * **`command` provider:** the system prompt and conversation go to the program's stdin and its stdout is the reply. If an argument contains `{prompt}` the prompt goes there
-  instead; `{model}` is replaced by the model name. No shell is involved. The program runs with your normal environment in an empty folder, and DeskPet cannot control what tools
+  instead; `{model}` is replaced by the model name. No shell is involved (on Windows a `.cmd` launcher has to go through `cmd.exe`, so an argument containing `"` or `%` is refused there). The program runs with your normal environment in an empty folder, and DeskPet cannot control what tools
   *that* program has, so choose one you trust. It cannot look at pictures. The third-party examples here are illustrations: check that program's own documentation for its flags.
 * **`claude-cli` provider:** runs your own unmodified `claude` command once per message with no tools, no connectors, no saved session and a scrubbed environment, and refuses an
   API-key login unless `ai.allowBilledApi` is true. DeskPet never sees your Claude login. `/effort low|…|max` works only here.
@@ -147,7 +146,8 @@ Menu options: *Voice*, *Rest at home*, pause walking, and (macOS) *Bring the cat
 
 | | macOS | Windows | Linux |
 |---|---|---|---|
-| Pet, chat, every AI provider, memory, pet designer | ✅ tested | ⚠️ not yet run on a real machine | ⚠️ not yet run on a real machine |
+| Starts, draws the 3D cat, chat round-trip, quits (automated check on every change) | ✅ | ✅ CI | ✅ CI (virtual display) |
+| Pet, chat, every AI provider, memory, pet designer, used by hand | ✅ tested | ⚠️ not yet used on a real machine | ⚠️ not yet used on a real machine |
 | Offline voices and speech recognition | ✅ tested | ⚠️ written to be portable, untested | ⚠️ written to be portable, untested |
 | System voice | `say` | PowerShell + SAPI | espeak-ng or speech-dispatcher (install one) |
 | Apple on-device speech recognition | ✅ | – | – |
@@ -156,9 +156,9 @@ Menu options: *Voice*, *Rest at home*, pause walking, and (macOS) *Bring the cat
 | Screen sharing with the exclusion list (password managers blocked) | ✅ | opt-in: `screen.allowUnchecked` | opt-in: `screen.allowUnchecked` |
 | Watching rules | ✅ | – | – |
 | Build an app | `npm run app` | `npm start` | `npm start` |
-| `claude-cli` provider | ✅ | ⚠️ the `claude` command may be a `.cmd` shim, which cannot be started without a shell: use an API provider | ✅ expected |
+| `claude-cli` provider | ✅ | ⚠️ finds `claude.exe` or npm's `claude.cmd` and stops the whole process tree; tested with a stand-in launcher, not yet with the real Claude Code on Windows (an API provider is the fallback) | ✅ expected, not yet tried with the real command |
 
-Everything outside macOS was written to be portable (the unit tests run on all three systems in CI), but I could only run the app itself on a Mac. If you try it on Windows or
+The unit tests and a smoke test of the real app run on all three systems in CI, but I have only used the app by hand on a Mac. Not yet checked outside macOS: the tray, always-on-top and click-through behaviour on real desktops, real audio, the offline voices and speech models, and the real `claude` command on Windows. If you try it on Windows or
 Linux, please open an issue with what you find. Wayland (Linux) may place or click-through the transparent window differently from X11.
 
 ## Privacy and safety
@@ -216,10 +216,11 @@ npm run e2e:conversation # models, memory, markdown, restart, screenshots, watch
 npm run e2e:pet          # the "change your pet" drawer: presets, undo, an AI design from text + a picture, offline recolour, persistence (~15 s)
 npm run e2e              # the full UI suite with a fake microphone and voice: window, chat, voice, sleep, drag, GPU loss (~100 s)
 npm run e2e:roam         # where the pet lives and walks: desktop layer, diagonal walking, drop anywhere, panel move/resize/minimise (~105 s)
+npm run e2e:smoke        # any OS: the app starts, draws the cat, opens the chat, replies, quits (~20 s; Linux needs a display, e.g. xvfb-run)
 ```
 
-The e2e suites launch the real app briefly (it takes focus, so run them one at a time and don't type meanwhile; they are written for macOS). They use fake assistants and make no network calls. `PET_DEBUG=1 npm start` prints state changes as JSON lines. Test-only switches (`PET_E2E`,
-`PET_USER_DATA`, `PET_SAY_BIN`, …) are read only when `PET_E2E=1`. CI (`.github/workflows/ci.yml`) runs the typecheck and unit tests on macOS, Linux and Windows.
+The e2e suites launch the real app briefly (it takes focus, so run them one at a time and don't type meanwhile; all but e2e:smoke are written for macOS). They use fake assistants and make no network calls. `PET_DEBUG=1 npm start` prints state changes as JSON lines. Test-only switches (`PET_E2E`,
+`PET_USER_DATA`, `PET_SAY_BIN`, …) are read only when `PET_E2E=1`. CI (`.github/workflows/ci.yml`) runs the typecheck, the unit tests and `e2e:smoke` on macOS, Linux and Windows.
 
 ```
 src/main/        Electron lifecycle, pet and chat windows, behaviour clock, menus, fish, the headless key tool
