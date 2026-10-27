@@ -50,6 +50,8 @@ jobs:
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
       - name: Run (Linux needs a virtual display)
         if: runner.os == 'Linux'
+        env:
+          PET_E2E_SOFTWARE_GL: "1"
         run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node tools/e2e-smoke.mjs
       - name: Run
         if: runner.os != 'Linux'

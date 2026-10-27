@@ -102,7 +102,11 @@ try {
     ok(f1 - f0 >= 5, '3D cat is animating (software rendering is allowed to be slow)', `${f1 - f0} frames in 1 s`)
     const st = await pet.eval(`window.__cat3d.stats()`)
     ok(st.opaque > 300, 'the cat actually covers pixels (not a blank canvas)', JSON.stringify(st))
-  } else console.log('NOTE  3D view unavailable here, so the 2D fallback is shown')
+  } else {
+    console.log('NOTE  3D view unavailable here, so the 2D fallback is shown')
+    console.log('--- app stderr (tail) ---\n' + stderr.slice(-2500))
+    console.log('--- renderer console ---\n' + lines.filter((l) => l.event === 'renderer-console').map((l) => l.message).join('\n').slice(-1500))
+  }
 
   ok(existsSync(join(userData, 'settings.json')), 'settings.json is created in the data folder')
   const saved = JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8'))
@@ -147,7 +151,7 @@ try {
   const bad = lines.filter((l) => l.event === 'renderer-console' && !/Context Lost|GPU|WebGL|swiftshader/i.test(l.message))
   ok(bad.length === 0, 'no renderer console warnings or errors', JSON.stringify(bad.slice(0, 3)))
   if (failures) console.log('\n--- app stderr (tail) ---\n' + stderr.slice(-3000))
-  rmSync(userData, { recursive: true, force: true })
+  try { rmSync(userData, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }) } catch {} // (Windows keeps files locked for a moment after exit)
   console.log(`\n${failures === 0 ? 'ALL PASSED' : failures + ' FAILED'} in ${((Date.now() - t0) / 1000).toFixed(1)}s`)
   process.exit(failures === 0 ? 0 : 1)
 }

@@ -48,6 +48,8 @@ const e2e = process.env['PET_E2E'] === '1'
 if (e2e) {
   if (process.env['PET_USER_DATA']) app.setPath('userData', process.env['PET_USER_DATA'])
   app.commandLine.appendSwitch('remote-debugging-port', process.env['PET_E2E_PORT'] ?? '9339')
+  // CI machines have no GPU: let Chromium draw WebGL in software so the 3D cat can be tested there too
+  if (process.env['PET_E2E_SOFTWARE_GL'] === '1') { app.commandLine.appendSwitch('use-angle', 'swiftshader'); app.commandLine.appendSwitch('enable-unsafe-swiftshader') }
 }
 
 // The app is called DeskPet. Settings, history, memory and voices live in ~/Library/Application Support/DeskPet
