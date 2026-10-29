@@ -20,6 +20,7 @@ export interface MenuActions {
   toggleMute(): void
   testVoice(): void
   changePet(): void
+  setup(): void
   resetPet(): void
   setVoice(choice: VoiceChoice): void
   moreVoices(): void
@@ -106,6 +107,7 @@ export function buildMenu(pet: PetController, actions: MenuActions, voice: Voice
     ...(voice.screenEnabled && voice.watchAvailable ? [{ label: voice.watching ? '👁 Stop watching (pause)' : 'Watch for my rules', click: actions.toggleWatch }] : []),
     { type: 'separator' },
     { label: voice.muted ? 'Unmute voice' : 'Mute voice', click: actions.toggleMute },
+    { label: 'Set up AI and voices…', click: actions.setup, enabled: !pet.isHidden },
     { label: 'Change your pet…', click: actions.changePet, enabled: !pet.isHidden },
     { label: 'Reset pet to the default cat', click: actions.resetPet },
     { type: 'separator' },

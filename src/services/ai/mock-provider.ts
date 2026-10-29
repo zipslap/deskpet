@@ -50,7 +50,7 @@ export class MockProvider implements ChatProvider {
         ? Array.from({ length: 120 }, (_, i) => `word${i + 1}`).join(' ')
         : cmd === '/midfail'
           ? 'Here is the start of an answer that will'
-          : `Mock reply: you said "${message.trim().slice(0, 200)}". Run npm run setup to connect a real AI.`
+          : `Mock reply: you said "${message.trim().slice(0, 200)}". Open Set up (the plug button in the chat header) to connect a real AI.`
 
     for (const word of text.split(' ')) {
       yield word + ' '

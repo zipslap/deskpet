@@ -18,6 +18,7 @@
       <header>
         <span id="title" class="title">Chat</span>
         <span id="status" class="status" aria-live="polite"></span>
+        <button id="setup-btn" type="button" class="icon" aria-label="Set up: connect an AI, get voices" aria-expanded="false" aria-controls="setupbar" title="Set up: connect an AI and download offline voices">🔌</button>
         <button id="pet-btn" type="button" class="icon" aria-label="Change your pet" aria-expanded="false" aria-controls="petbar" title="Change your pet: restyle it from a description and pictures">🐾</button>
         <button id="data-btn" type="button" class="icon" aria-label="What the pet remembers" aria-expanded="false" aria-controls="databar" title="What the pet remembers about you (memory, conversation, summary)">🗂</button>
         <button id="theme-btn" type="button" class="icon" aria-label="Customise the look" aria-expanded="false" aria-controls="themebar" title="Customise the look">🎨</button>
@@ -41,6 +42,32 @@
           <button id="data-done" type="button" class="pixbtn">Done</button>
         </div>
         <p class="muted">Screenshots are never saved; they exist only while a message is being sent.</p>
+      </section>
+      <section id="setupbar" class="databar setupbar" aria-label="Set up" hidden>
+        <h3>Connect an AI <span id="setup-now" class="muted"></span></h3>
+        <label class="field"><span>Service</span><select id="setup-provider" aria-label="Which AI answers"></select></label>
+        <p id="setup-hint" class="muted"></p>
+        <label class="field" id="setup-key-row"><span>API key</span><input id="setup-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key" aria-label="API key" /></label>
+        <p id="setup-key-note" class="muted"></p>
+        <label class="field" id="setup-url-row"><span>Server address</span><input id="setup-url" type="text" autocomplete="off" spellcheck="false" placeholder="http://localhost:8080/v1" aria-label="Server address" /></label>
+        <label class="field" id="setup-cmd-row"><span>Command</span><input id="setup-cmd" type="text" autocomplete="off" spellcheck="false" placeholder="gemini" aria-label="Command to run" /></label>
+        <label class="field" id="setup-args-row"><span>Arguments</span><input id="setup-args" type="text" autocomplete="off" spellcheck="false" placeholder="-p {prompt}" aria-label="Arguments" /></label>
+        <label class="field" id="setup-model-row"><span>Model</span><input id="setup-model" type="text" list="setup-models" autocomplete="off" spellcheck="false" aria-label="Model" /></label>
+        <datalist id="setup-models"></datalist>
+        <div class="themeactions">
+          <button id="setup-test" type="button" class="pixbtn">Test</button>
+          <button id="setup-save" type="button" class="pixbtn">Save and restart</button>
+        </div>
+        <p id="setup-msg" class="muted" aria-live="polite"></p>
+        <h3>Offline voices and speech <span id="setup-voice-now" class="muted"></span></h3>
+        <p class="muted">DeskPet talks with the system voice until you download these. They run on your computer; nothing you say is sent anywhere. Needs Python 3.9 or newer (python.org).</p>
+        <div class="themeactions">
+          <button id="setup-voices-starter" type="button" class="pixbtn">Starter (~450 MB)</button>
+          <button id="setup-voices-big" type="button" class="pixbtn">Big collection (~2.3 GB)</button>
+          <button id="setup-voices-cancel" type="button" class="pixbtn" hidden>Cancel</button>
+        </div>
+        <pre id="setup-voice-log" class="dataview" hidden></pre>
+        <div class="themeactions"><button id="setup-done" type="button" class="pixbtn">Done</button></div>
       </section>
       <section id="petbar" class="databar petbar" aria-label="Change your pet" hidden>
         <h3>Change your pet <span id="pet-name" class="muted"></span></h3>
@@ -76,7 +103,7 @@
       </section>
       <ol id="log" class="log" aria-live="polite"></ol>
       <div id="empty" class="empty">
-        <div id="empty-mock"><p>Say hello. This is the offline demo, so replies are canned and nothing leaves this computer.</p><p>To talk to a real AI (Claude, ChatGPT, Gemini, a local model...), run <code>npm run setup</code> in the DeskPet folder. The README lists every option.</p></div>
+        <div id="empty-mock"><p>Say hello. This is the offline demo, so replies are canned and nothing leaves this computer.</p><p>To talk to a real AI (Claude, ChatGPT, Gemini, a local model...) and to get offline voices, open Set up.</p><p><button id="empty-setup" type="button" class="pixbtn">Set up…</button></p></div>
         <div id="empty-ai" hidden><p>Just talk, as you would to the assistant anywhere else. Short questions get short answers; ask for depth and you get depth.</p><p>Your messages go to the AI service you connected. The conversation is kept on this Mac between sessions (<code>/new</code> starts over); <code>/help</code> lists commands.</p></div>
       </div>
       <div id="voicebar" class="voicebar" role="status" aria-live="polite" hidden>

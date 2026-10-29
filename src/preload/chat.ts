@@ -4,6 +4,7 @@ import { Channels } from '../shared/ipc'
 import { parsePetUiState, type PetAction, type PetDesignRequest, type PetUiState } from '../shared/pet-types'
 import { parseDataSnapshot, parseMemoryFile, type DataSnapshot } from '../shared/data-types'
 import { parseScreenState, type ScreenUiState } from '../shared/screen-types'
+import { parseSetupUiState, type SetupRequest, type SetupUiState, type VoicePack } from '../shared/setup-types'
 import { parseTheme, type Theme } from '../shared/theme'
 import { parseVoiceState, type VoiceUiState } from '../shared/voice-types'
 
@@ -61,6 +62,20 @@ contextBridge.exposeInMainWorld('chat', {
   onPetShow: (cb: () => void): void => {
     ipcRenderer.on(Channels.chatPetShow, () => cb())
   },
+  onSetupState: (cb: (s: SetupUiState) => void): void => {
+    ipcRenderer.on(Channels.chatSetupState, (_e, payload: unknown) => {
+      const s = parseSetupUiState(payload)
+      if (s) cb(s)
+    })
+  },
+  onSetupShow: (cb: () => void): void => {
+    ipcRenderer.on(Channels.chatSetupShow, () => cb())
+  },
+  openSetup: (): void => ipcRenderer.send(Channels.chatSetupOpen),
+  testSetup: (req: SetupRequest): void => ipcRenderer.send(Channels.chatSetupTest, req),
+  saveSetup: (req: SetupRequest): void => ipcRenderer.send(Channels.chatSetupSave, req),
+  installVoices: (pack: VoicePack): void => ipcRenderer.send(Channels.chatSetupVoices, pack),
+  cancelVoices: (): void => ipcRenderer.send(Channels.chatSetupVoicesCancel),
   openPet: (): void => ipcRenderer.send(Channels.chatPetOpen),
   designPet: (req: PetDesignRequest): void => ipcRenderer.send(Channels.chatPetDesign, req),
   petAction: (a: PetAction): void => ipcRenderer.send(Channels.chatPetAction, a),

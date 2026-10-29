@@ -173,7 +173,7 @@ export function classifyHttpError(service: string, status: number, body: string)
   }
   detail = oneLine(detail, 140)
   const tail = detail ? ` (${service} says: ${detail})` : ''
-  if (status === 401 || status === 403) return `${service} rejected the API key (HTTP ${status}). Check it, or store a new one with: npm run setup${tail}`
+  if (status === 401 || status === 403) return `${service} rejected the API key (HTTP ${status}). Check it, or store a new one in Set up (the plug button in the chat header; or run: npm run setup)${tail}`
   if (status === 404) return `${service} doesn't know that model or address (HTTP 404). Try /model <name> with a model your account offers.${tail}`
   if (status === 408 || status === 504) return `${service} took too long to answer. Try again.${tail}`
   if (status === 429) return `${service}'s rate limit or quota was hit. Try again later, or check your plan.${tail}`
@@ -236,7 +236,7 @@ export class HttpProvider implements ChatProvider {
     const model = o.model().trim()
     if (!model) throw new ProviderError(`No model is set for ${o.service}. Say /model <name>, or set "ai.model" in settings.json.`)
     const key = await o.getKey()
-    if (o.needsKey && !key) throw new ProviderError(`No API key found for ${o.service}. Store one with: npm run setup`)
+    if (o.needsKey && !key) throw new ProviderError(`No API key found for ${o.service}. Add one in Set up (the plug button in the chat header; or run: npm run setup)`)
     if (signal?.aborted) throw abortError()
 
     const image = imagesOf(context)

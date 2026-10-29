@@ -168,6 +168,10 @@ select { font: inherit; font-size: 11px; color: var(--fg); background: color-mix
 .presetrow { display: flex; gap: 6px; flex-wrap: wrap; }
 .petbar.dropping { outline: 2px dashed var(--user); }
 #pet-msg.error { color: #b3261e; }
+.setupbar .field { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 6px; }
+.setupbar .field[hidden] { display: none; }
+.setupbar input, .setupbar select { width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; padding: 4px 6px; border: 2px solid var(--outline); background: var(--bubble); color: inherit; min-width: 0; }
+#setup-msg.error, #setup-voice-log.error { color: #b3261e; }
 .databar h3 { margin: 4px 0 0; font-size: 12px; }
 .muted { color: var(--muted); font-weight: 400; }
 .databar p { margin: 0; }

@@ -1,0 +1,84 @@
+name: Release
+
+# Builds the downloads (macOS dmg, Windows installer, Linux AppImage), starts each packaged app with the smoke test, and attaches them to the
+# GitHub release for the tag. Run by hand (Actions -> Release -> Run workflow) to build and test without publishing anything.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+# The build jobs only read the repository; only the publish job below can write to it.
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build + smoke test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Download the Electron binary (npm ci did not run its install script on the runner)
+        run: node node_modules/electron/install.js
+      - name: Package
+        run: npm run dist
+      - name: Linux only - let Electron run without a setuid sandbox on the runner
+        if: runner.os == 'Linux'
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+      - name: Smoke test the packaged app (macOS)
+        if: runner.os == 'macOS'
+        run: node tools/e2e-smoke.mjs
+        env:
+          PET_SMOKE_BIN: ${{ github.workspace }}/dist/mac-arm64/DeskPet.app/Contents/MacOS/DeskPet
+      - name: Smoke test the packaged app (Windows)
+        if: runner.os == 'Windows'
+        run: node tools/e2e-smoke.mjs
+        env:
+          PET_SMOKE_BIN: ${{ github.workspace }}\dist\win-unpacked\DeskPet.exe
+      - name: Smoke test the packaged app (Linux, virtual display)
+        if: runner.os == 'Linux'
+        run: xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" node tools/e2e-smoke.mjs
+        env:
+          PET_E2E_SOFTWARE_GL: "1"
+          PET_SMOKE_BIN: ${{ github.workspace }}/dist/linux-unpacked/deskpet
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deskpet-${{ matrix.os }}
+          if-no-files-found: error
+          path: |
+            dist/*.dmg
+            dist/*-mac.zip
+            dist/*.exe
+            dist/*-win.zip
+            dist/*.AppImage
+
+  publish:
+    name: attach to the release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 \
+            || gh release create "$TAG" --generate-notes --repo "$REPO"
+          gh release upload "$TAG" assets/* --clobber --repo "$REPO"

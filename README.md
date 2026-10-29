@@ -1,33 +1,46 @@
 # DeskPet
 
+**A little 3D cat that lives on your desktop and is a face for any AI.** Click it to chat, or talk out loud and hear it answer in an offline voice.
+Say "turn my pet into a mermaid" and it redesigns itself on the spot.
+
 ![DeskPet](docs/screenshots/deskpet-hero.png)
 
-> **Beta, not a finished product.** DeskPet is an early, actively changing project. It works well on macOS, where it has been tested and used. On Windows and Linux the app is checked automatically on every change (it starts, draws the cat, opens the chat, gets a reply and quits), but it has not yet been used on a real desktop there. Expect rough edges, changing settings, and the occasional bug, and please [report what you find](../../issues).
-
-A small 3D voxel cat that lives on your desktop, walks around, naps, eats the occasional fish, and is a **face for any AI**.
-Click it to chat, or talk out loud and hear it answer in an offline neural voice. Tell it **"turn my pet into a mermaid"** (with pictures
-if you like) and it redesigns itself on the spot.
-
-* **Bring your own AI:** Claude, ChatGPT/OpenAI, Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, local models (Ollama, LM Studio), any OpenAI-compatible
-  server, or a command-line assistant you are already signed in to (your subscription, no API key).
+* **Bring your own AI:** Claude, ChatGPT, Gemini, OpenRouter, Groq, Mistral, DeepSeek, xAI, local models (Ollama, LM Studio), any OpenAI-compatible server,
+  or a command-line assistant you are already signed in to (your subscription, no API key). Switch mid-conversation.
 * **Change your pet by asking:** describe a new look, add inspiration pictures, and the AI redesigns the voxel pet live. No code. Ready-made pets included.
-* **Voices and speech, offline:** 179 neural voices (Kokoro, Piper) in 49 languages and offline speech recognition, downloaded on demand; or the system's own voice.
-* **macOS, Windows and Linux** (see [what works where](#what-works-where)).
+* **Offline voices and speech:** 179 neural voices (Kokoro, Piper) in 49 languages and offline speech recognition, downloaded on demand, or the system's own voice.
 * **Private by default:** with nothing configured it is an offline demo. API keys are encrypted by your OS. Screen sharing is off until you ask, per message.
-* **Source only:** you build and run it yourself. Nothing is downloaded or sent anywhere except what you set up below.
+* **macOS, Windows and Linux** (see [what works where](#what-works-where)). Free, MIT licensed.
+
+> **Beta.** It works well on macOS, where it has been tested and used. On Windows and Linux the app is checked automatically on every change (it starts, draws the cat,
+> opens the chat, gets a reply and quits) but has not yet been used on a real desktop. Expect rough edges, and please [report what you find](../../issues).
 
 ![Bring your own AI, pick your own voice](docs/screenshots/deskpet-providers-voices.png)
+
+## Download
+
+Get the latest build from the [Releases page](../../releases/latest):
+
+| | File | First launch |
+|---|---|---|
+| **macOS** (Apple Silicon) | `DeskPet-…-arm64.dmg` | Drag to Applications. The app is not signed with an Apple developer certificate, so macOS blocks the first launch: right-click DeskPet → **Open**, or run `xattr -dr com.apple.quarantine /Applications/DeskPet.app` once. |
+| **Windows** (64-bit) | `DeskPet Setup …exe` (or the `-win.zip`) | Windows SmartScreen may warn that the publisher is unknown: **More info → Run anyway**. |
+| **Linux** (64-bit) | `DeskPet-….AppImage` | `chmod +x DeskPet-*.AppImage`, then run it. Needs a desktop session with a compositor and, for stored API keys, gnome-keyring or KWallet. |
+
+A download starts as the offline demo (canned replies, system voice). To connect a real AI, open the chat and click the plug icon (**Set up**): pick a service, paste a key (or choose a local model or a signed-in command-line assistant), press Test, and you are done. The same screen downloads the offline voices and speech recognition. Intel Macs: build from source.
+The builds are unsigned because I have not bought signing certificates; every download is built by the public [release workflow](.github/workflows/release.yml) from the tagged source.
+
+## Build from source
 
 Requirements: Node ≥ 22.12 and, for offline voices and speech, Python ≥ 3.9. On a Mac also the Xcode command-line tools (`xcode-select --install`) for
 the optional native helpers. On Linux, a desktop session with a compositor (for the transparent window) and a keyring (gnome-keyring or KWallet) to store API keys.
 
-## Quick start
-
 ```bash
-git clone <this repository> deskpet && cd deskpet
+git clone https://github.com/zipslap/deskpet.git && cd deskpet
 npm install        # if Electron's binary did not download: node node_modules/electron/install.js
 npm run setup      # pick your AI, store its key securely, optionally download voices and speech recognition
 npm start          # on a Mac you can also build a real app: npm run app
+npm run dist       # or build the same installer the Releases page offers, into dist/
 ```
 
 Click the pet to open the chat. Right-click it (or use the tray / menu-bar icon) for the menu. On a Mac, opening the app turns the pet fully on and quitting
@@ -155,7 +168,8 @@ Menu options: *Voice*, *Rest at home*, pause walking, and (macOS) *Bring the cat
 | Pet sits on the desktop *behind* windows, walks around window edges and desktop icons | ✅ | – (always-on-top overlay, walks the screen) | – (same) |
 | Screen sharing with the exclusion list (password managers blocked) | ✅ | opt-in: `screen.allowUnchecked` | opt-in: `screen.allowUnchecked` |
 | Watching rules | ✅ | – | – |
-| Build an app | `npm run app` | `npm start` | `npm start` |
+| Download | `.dmg` (Apple Silicon) | installer / zip | AppImage |
+| Build an app | `npm run app` | `npm run dist` | `npm run dist` |
 | `claude-cli` provider | ✅ | ⚠️ finds `claude.exe` or npm's `claude.cmd` and stops the whole process tree; tested with a stand-in launcher, not yet with the real Claude Code on Windows (an API provider is the fallback) | ✅ expected, not yet tried with the real command |
 
 The unit tests and a smoke test of the real app run on all three systems in CI, but I have only used the app by hand on a Mac. Not yet checked outside macOS: the tray, always-on-top and click-through behaviour on real desktops, real audio, the offline voices and speech models, and the real `claude` command on Windows. If you try it on Windows or
@@ -220,7 +234,7 @@ npm run e2e:smoke        # any OS: the app starts, draws the cat, opens the chat
 ```
 
 The e2e suites launch the real app briefly (it takes focus, so run them one at a time and don't type meanwhile; all but e2e:smoke are written for macOS). They use fake assistants and make no network calls. `PET_DEBUG=1 npm start` prints state changes as JSON lines. Test-only switches (`PET_E2E`,
-`PET_USER_DATA`, `PET_SAY_BIN`, …) are read only when `PET_E2E=1`. CI (`.github/workflows/ci.yml`) runs the typecheck, the unit tests and `e2e:smoke` on macOS, Linux and Windows.
+`PET_USER_DATA`, `PET_SAY_BIN`, …) are read only when `PET_E2E=1`. CI (`.github/workflows/ci.yml`) runs the typecheck, the unit tests and `e2e:smoke` on macOS, Linux and Windows; the release workflow runs `e2e:smoke` against each packaged download too (`PET_SMOKE_BIN=<executable> npm run e2e:smoke` does the same locally).
 
 ```
 src/main/        Electron lifecycle, pet and chat windows, behaviour clock, menus, fish, the headless key tool

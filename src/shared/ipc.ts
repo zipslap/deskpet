@@ -49,6 +49,13 @@ export const Channels = {
   chatPetState: 'chat:pet-state', // main -> chat renderer: PetUiState
   chatPetDesign: 'chat:pet-design', // chat renderer -> main: PetDesignRequest (instructions + images)
   chatPetAction: 'chat:pet-action', // chat renderer -> main: PetAction (undo / reset / preset)
+  chatSetupOpen: 'chat:setup-open', // chat renderer -> main: send me the SetupUiState (the "Set up" drawer)
+  chatSetupShow: 'chat:setup-show', // main -> chat renderer: open the "Set up" drawer
+  chatSetupState: 'chat:setup-state', // main -> chat renderer: SetupUiState
+  chatSetupTest: 'chat:setup-test', // chat renderer -> main: SetupRequest (check the connection)
+  chatSetupSave: 'chat:setup-save', // chat renderer -> main: SetupRequest (save it and restart)
+  chatSetupVoices: 'chat:setup-voices', // chat renderer -> main: VoicePack (download the offline voices)
+  chatSetupVoicesCancel: 'chat:setup-voices-cancel',
   petSpec: 'pet:spec', // main -> pet renderer: the pet spec to draw (or null for the default)
   petBadge: 'pet:badge', // main -> pet renderer: PetBadge
   petE2E: 'pet:e2e' // pet renderer -> main: test commands; the main process ignores it unless PET_E2E=1

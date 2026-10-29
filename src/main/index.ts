@@ -35,6 +35,8 @@ import { VoiceController } from '../services/voice/voice-controller'
 import { EFFORTS, parseModelChoice, type AssistantInfo } from '../shared/chat-types'
 import { helpText, parseCommand, type ChatCommand } from '../shared/commands'
 import { Channels, parseChatText, parseHover } from '../shared/ipc'
+import { parseSetupRequest, parseVoicePack } from '../shared/setup-types'
+import { SetupController } from './setup-controller'
 import { ChatWindow } from './chat-window'
 import { PetController, type RoamMode } from './controller'
 import { buildMenu, type MenuActions, type VoiceChoice, type VoiceMenuInfo } from './menu'
@@ -114,6 +116,7 @@ let voiceCatalog: CatalogVoice[] = []
 let voiceChoice: VoiceChoice = { engine: 'say', sayVoice: '' }
 let sayVoiceNames: string[] = []
 let settingsRef: Settings | null = null
+let setup: SetupController | null = null
 /** The chat is being closed by clicking him: he goes to sleep once it has closed. */
 let sleepAfterClose = false
 let pond: FishPond | null = null
@@ -179,10 +182,8 @@ const actions: MenuActions = {
   changePet: () => showPetDrawer(),
   resetPet: () => applyPet(null, 'Back to the default cat.'),
   setVoice: (choice) => applyVoice(choice),
-  moreVoices: () => {
-    if (!chat?.isOpen) chat?.open()
-    session?.notice('To add voices, run this in a Terminal inside the DeskPet folder:  npm run voices -- list   (see them all),  npm run voices -- install piper-en_GB-alba-medium   (add one),  npm run voices -- install --lang de   (a whole language). Then reopen this menu.')
-  },
+  setup: () => showSetupDrawer(),
+  moreVoices: () => showSetupDrawer(),
   quit: () => app.quit()
 }
 
@@ -213,7 +214,7 @@ function makeStt(appleHelper: string): SpeechToText {
     helperPath: python,
     helperArgs: [join(import.meta.dirname, '../../native/stt/stt_server.py'), '--model', model],
     ready: () => model !== '',
-    notInstalledMessage: 'Offline speech recognition is not set up. In the DeskPet folder run: npm run speech -- install --recommended'
+    notInstalledMessage: 'Offline speech recognition is not set up. Open Set up (the plug button in the chat header) and download the voices and speech recognition.'
   })
 }
 
@@ -239,7 +240,7 @@ function makeTts(choice: VoiceChoice): SwitchableTts['current'] {
   const entry = installedVoices(voiceCatalog, modelsDirFor(st)).find((v) => v.id === choice.model)
   const python = st.voice.local.python || join(app.getPath('userData'), 'voices', 'venv', 'bin', 'python')
   if (!entry || !existsSync(python)) {
-    console.warn(`The local voice "${choice.model}" is not installed (run: npm run voices -- setup, then npm run voices -- install ${choice.model}); using the macOS voice`)
+    console.warn(`The local voice "${choice.model}" is not installed (open Set up to download voices, or run: npm run voices -- install ${choice.model}); using the macOS voice`)
     return say(st.voice.voice)
   }
   const l = st.voice.local
@@ -329,6 +330,15 @@ function showPetDrawer(): void {
   pushPet()
 }
 
+/** Open the chat with the "Set up" drawer (connect an AI, download voices). */
+function showSetupDrawer(): void {
+  if (!pet || pet.isHidden) return
+  if (!chat?.isOpen) chat?.open()
+  // the panel may still be loading: it asks for the state itself when it is ready
+  setTimeout(() => chat?.send(Channels.chatSetupShow, null), 300)
+  setup?.refresh()
+}
+
 /** Draw `spec` (null = the default cat) on the pet, remember it, and tell the drawer. */
 function applyPet(spec: PetSpec | null, message: string): void {
   petStore?.set(spec)
@@ -352,7 +362,7 @@ async function designPetLook(text: string, images: PetImage[], fromChat: boolean
   if (!usingAi || !providerInfo) {
     const r = quickRecolour(text, petStore?.current ?? null)
     if (r) return applyPet(r, `Done: ${r.name}.`)
-    return say('Without an AI I can only recolour ("make my cat green") or use a ready-made pet. Connect an AI (npm run setup) to design anything, from a description or pictures.', true)
+    return say('Without an AI I can only recolour ("make my cat green") or use a ready-made pet. Connect an AI (🔌 Set up in the chat header) to design anything, from a description or pictures.', true)
   }
   if (images.length > 0 && !providerInfo.hasVision) return say(`${providerInfo.service} cannot look at pictures. Describe the look in words instead, or switch to a provider that can see images.`, true)
   petBusy = true
@@ -417,7 +427,7 @@ const savePrefsNow = (): void => {
 
 function setModelChoice(choice: { model?: string; effort?: string }): void {
   if (!session) return
-  if (!usingAi) return void session.notice('The offline demo has no models. Connect an AI first: run `npm run setup` (see the README).', true)
+  if (!usingAi) return void session.notice('The offline demo has no models. Connect an AI first: open Set up (the plug button in the chat header).', true)
   if (choice.model !== undefined) {
     model = choice.model
     if (!modelChoices.includes(model)) modelChoices = [...modelChoices, model]
@@ -609,7 +619,7 @@ function registerIpc(): void {
     if (screenBusy) return void chat?.restoreText(text)
     if (cmd?.kind === 'look' || (screenState.armed && screenState.enabled)) {
       clearNudge()
-      if (!usingAi) return void session?.notice('The offline demo cannot look at screenshots. Connect an AI first: run `npm run setup` (see the README).', true)
+      if (!usingAi) return void session?.notice('The offline demo cannot look at screenshots. Connect an AI first: open Set up (the plug button in the chat header).', true)
       if (providerInfo && !providerInfo.hasVision) return void session?.notice(`${providerInfo.service} cannot look at screenshots. Pick another provider to share your screen (see the README).`, true)
       return void sendWithScreen(cmd?.kind === 'look' ? cmd.question : text, text)
     }
@@ -627,6 +637,20 @@ function registerIpc(): void {
   })
   ipcMain.on(Channels.chatDataOpen, (e) => fromChat(e) && pushData())
   ipcMain.on(Channels.chatPetOpen, (e) => fromChat(e) && pushPet())
+  ipcMain.on(Channels.chatSetupOpen, (e) => fromChat(e) && setup?.refresh())
+  ipcMain.on(Channels.chatSetupTest, (e, payload: unknown) => {
+    const req = parseSetupRequest(payload)
+    if (fromChat(e) && req) void setup?.test(req)
+  })
+  ipcMain.on(Channels.chatSetupSave, (e, payload: unknown) => {
+    const req = parseSetupRequest(payload)
+    if (fromChat(e) && req) setup?.save(req)
+  })
+  ipcMain.on(Channels.chatSetupVoices, (e, payload: unknown) => {
+    const pack = parseVoicePack(payload)
+    if (fromChat(e) && pack) void setup?.installVoices(pack)
+  })
+  ipcMain.on(Channels.chatSetupVoicesCancel, (e) => fromChat(e) && setup?.cancelVoices())
   ipcMain.on(Channels.chatPetDesign, (e, payload: unknown) => {
     const req = parsePetDesignRequest(payload)
     if (!fromChat(e) || !req) return
@@ -940,7 +964,7 @@ app.whenReady().then(() => {
     }
   })
 
-  // Who answers is an explicit choice in settings.json ("ai.provider", set up by `npm run setup`). The default is the offline
+  // Who answers is an explicit choice in settings.json ("ai.provider", set in the Set up drawer or by `npm run setup`). The default is the offline
   // demo, so a fresh install makes no network request at all.
   providerInfo = describeProvider(settings.ai)
   const real = providerInfo.preset.kind !== 'mock'
@@ -1074,6 +1098,20 @@ app.whenReady().then(() => {
     }
   )
 
+  setup = new SetupController({
+    dataDir: app.getPath('userData'),
+    toolsDir: join(import.meta.dirname, '../../tools'),
+    execPath: process.execPath,
+    keys: () => keyStore,
+    env: process.env,
+    currentAi: () => ({ provider: settings.ai.provider, model: settings.ai.model, baseUrl: settings.ai.baseUrl, command: settings.ai.command, args: settings.ai.args }),
+    push: (state) => chat?.send(Channels.chatSetupState, state),
+    restart: () => {
+      if (e2e) return void log('setup-restart') // a test run must not restart itself
+      app.relaunch()
+      app.exit(0)
+    }
+  })
   registerIpc()
   createTray()
 
@@ -1120,6 +1158,7 @@ app.on('will-quit', () => {
   session?.cancel()
   provider?.dispose?.() // no assistant process or request outlives the app
   summaryDispose?.()
+  setup?.dispose()
   pet?.dispose()
 })
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => app.quit())

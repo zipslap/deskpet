@@ -34,10 +34,12 @@ async function waitFor(fn, ms = 8000, step = 50) {
   }
 }
 
-const bin = join(process.cwd(), 'node_modules', '.bin', process.platform === 'win32' ? 'electron-vite.cmd' : 'electron-vite')
-const app = spawn(bin, ['preview'], {
+// PET_SMOKE_BIN=<path to the packaged DeskPet executable> checks a built download (npm run dist) instead of the source tree.
+const packaged = process.env['PET_SMOKE_BIN']
+const bin = packaged || join(process.cwd(), 'node_modules', '.bin', process.platform === 'win32' ? 'electron-vite.cmd' : 'electron-vite')
+const app = spawn(bin, packaged ? [] : ['preview'], {
   // (.cmd shims need a shell on Windows)
-  shell: process.platform === 'win32',
+  shell: !packaged && process.platform === 'win32',
   env: {
     ...process.env,
     PET_E2E: '1', PET_DEBUG: '1', PET_USER_DATA: userData, PET_E2E_PORT: String(PORT),
@@ -132,6 +134,28 @@ try {
   ok(bubbles[0] === 'user|hello pet' && String(bubbles[1]).startsWith('assistant|Mock reply: you said "hello pet"'), 'the transcript shows the message and the streamed reply', JSON.stringify(bubbles))
   const seq = modesSince(t)
   ok(seq[0] === 'thinking' && seq.at(-1) === 'curious' && seq.includes('speaking'), 'pet goes thinking -> speaking -> curious', seq.join())
+
+  // ---- the Set up drawer: connect an AI without a terminal ----
+  await chat.eval(`document.getElementById('setup-btn').click()`)
+  ok(!!(await waitFor(() => chat.eval(`!document.getElementById('setupbar').hidden && document.querySelectorAll('#setup-provider option').length >= 10`), 5000)), 'the Set up drawer opens and lists the services')
+  const pick = (id) => chat.eval(`(() => { const s = document.getElementById('setup-provider'); s.value = ${JSON.stringify(id)}; s.dispatchEvent(new Event('change')) })()`)
+  const shown = (id) => chat.eval(`!document.getElementById(${JSON.stringify(id)}).hidden`)
+  await pick('openai')
+  ok((await shown('setup-key-row')) && !(await shown('setup-url-row')), 'a hosted service asks for a key, not an address')
+  await pick('ollama')
+  ok(!(await shown('setup-key-row')), 'a local server asks for no key')
+  await pick('command')
+  ok((await shown('setup-cmd-row')) && (await shown('setup-args-row')), 'a command-line assistant asks for the command')
+  await pick('custom')
+  await chat.eval(`(() => { const u = document.getElementById('setup-url'); u.value = 'http://example.com/v1'; document.getElementById('setup-test').click() })()`)
+  ok(!!(await waitFor(() => chat.eval(`/https/.test(document.getElementById('setup-msg').textContent)`), 5000)), 'an unsafe server address is refused before any key could be sent')
+  await pick('ollama')
+  await chat.eval(`document.getElementById('setup-save').click()`)
+  ok(!!(await waitFor(() => lines.some((l) => l.event === 'setup-restart'), 5000, 100)), 'saving asks the app to restart (suppressed in tests)')
+  const after = JSON.parse(readFileSync(join(userData, 'settings.json'), 'utf8'))
+  ok(after.ai?.provider === 'ollama' && after.voice?.autoSend === false, 'the choice is written to settings.json and everything else is kept', JSON.stringify(after.ai))
+  await chat.eval(`document.getElementById('setup-done').click()`)
+  ok(await chat.eval(`document.getElementById('setupbar').hidden`), 'Done closes the drawer')
 
   // ---- Esc closes the chat, the pet carries on ----
   await chat.key('Escape', 'Escape', 27).catch(() => {}) // the window may go away before it answers

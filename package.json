@@ -25,12 +25,15 @@
     "voices": "node tools/voices.mjs",
     "e2e:pet": "npm run helper && electron-vite build && node tools/e2e-pet.mjs",
     "speech": "node tools/speech.mjs",
-    "e2e:smoke": "npm run helper && electron-vite build && node tools/e2e-smoke.mjs"
+    "e2e:smoke": "npm run helper && electron-vite build && node tools/e2e-smoke.mjs",
+    "dist": "npm run helper && electron-vite build && electron-builder --publish never",
+    "dist:dir": "npm run helper && electron-vite build && electron-builder --dir --publish never"
   },
   "devDependencies": {
     "@types/node": "24.19.2",
     "@types/three": "0.185.4",
     "electron": "43.8.3",
+    "electron-builder": "26.17.0",
     "electron-vite": "6.0.0",
     "typescript": "5.9.3",
     "vite": "8.3.4",
@@ -56,5 +59,88 @@
     "darwin",
     "win32",
     "linux"
-  ]
+  ],
+  "author": {
+    "name": "Riccardo Ragni"
+  },
+  "homepage": "https://github.com/zipslap/deskpet",
+  "build": {
+    "appId": "com.deskpet.app",
+    "productName": "DeskPet",
+    "copyright": "MIT, Riccardo Ragni",
+    "asar": false,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "out/**",
+      "assets/**",
+      "native/**",
+      "tools/voices.mjs",
+      "tools/speech.mjs",
+      "tools/lib/**",
+      "!native/*.swift",
+      "!native/*.m",
+      "!native/Info.plist",
+      "!native/**/__pycache__",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "assets/icon/deskpet.icns",
+      "category": "public.app-category.entertainment",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "extendInfo": {
+        "LSMultipleInstancesProhibited": true,
+        "NSMicrophoneUsageDescription": "DeskPet listens only while you press the microphone button, to turn what you say into text.",
+        "NSSpeechRecognitionUsageDescription": "DeskPet turns what you say into text on this Mac.",
+        "NSScreenCaptureUsageDescription": "DeskPet looks at your screen only when you ask it to.",
+        "NSAppleEventsUsageDescription": "DeskPet asks Finder where the icons on your desktop are, so the pet can walk around them instead of over them. Nothing else is read."
+      }
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon/deskpet.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "linux": {
+      "executableName": "deskpet",
+      "target": [
+        "AppImage"
+      ],
+      "icon": "assets/icon/deskpet.png",
+      "category": "Utility"
+    }
+  }
 }

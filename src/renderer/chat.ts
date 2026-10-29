@@ -1,3 +1,4 @@
+import { EMPTY_SETUP_UI, type SetupProvider, type SetupRequest, type SetupUiState, type VoicePack } from '../shared/setup-types'
 import { MAX_PET_IMAGES, PET_IMAGE_EDGE, EMPTY_PET_UI, type PetAction, type PetDesignRequest, type PetImage, type PetUiState } from '../shared/pet-types'
 import { MAX_MESSAGE_CHARS } from '../shared/ipc'
 import type { ChatSnapshot } from '../shared/chat-types'
@@ -36,6 +37,13 @@ interface ChatApi {
   onData(cb: (d: DataSnapshot) => void): void
   onPetState(cb: (s: PetUiState) => void): void
   onPetShow(cb: () => void): void
+  onSetupState(cb: (s: SetupUiState) => void): void
+  onSetupShow(cb: () => void): void
+  openSetup(): void
+  testSetup(req: SetupRequest): void
+  saveSetup(req: SetupRequest): void
+  installVoices(pack: VoicePack): void
+  cancelVoices(): void
   openPet(): void
   designPet(req: PetDesignRequest): void
   petAction(a: PetAction): void
@@ -74,7 +82,7 @@ const settingsBtn = $<HTMLButtonElement>('settings')
 
 // round pixel buttons with pixel icons (no emoji)
 installPixelShapes()
-for (const [id, icon] of [['pet-btn', 'paw'], ['data-btn', 'data'], ['theme-btn', 'palette'], ['watch-btn', 'eye'], ['mute', 'speaker'], ['quit', 'house'], ['collapse', 'minimise'], ['close', 'close'], ['cam', 'camera'], ['mic', 'mic']] as const) setIcon($(id), icon)
+for (const [id, icon] of [['setup-btn', 'plug'], ['pet-btn', 'paw'], ['data-btn', 'data'], ['theme-btn', 'palette'], ['watch-btn', 'eye'], ['mute', 'speaker'], ['quit', 'house'], ['collapse', 'minimise'], ['close', 'close'], ['cam', 'camera'], ['mic', 'mic']] as const) setIcon($(id), icon)
 setIcon(action, 'send', true)
 
 let busy = false
@@ -350,7 +358,7 @@ function renderVoice(v: VoiceUiState): void {
     cls = 'live'
   }
   else if (v.notice) text = v.notice
-  else if (!v.canListen) text = 'Voice input is unavailable: run `npm run helper` to build the speech helper.'
+  else if (!v.canListen) text = 'Voice input is not set up: open Set up (the plug button) and download the voices and speech recognition.'
   voicetext.textContent = text
   voicebar.hidden = text === ''
   voicebar.className = `voicebar ${cls}`.trim()
@@ -556,6 +564,131 @@ window.chat.onTheme((t) => setTheme(t, false))
 syncThemeUi(DEFAULT_THEME)
 
 
+// ---------------------------------------------------------------- set up: connect an AI, get voices
+const setupBtn = $<HTMLButtonElement>('setup-btn')
+const setupbar = $<HTMLElement>('setupbar')
+const setupProvider = $<HTMLSelectElement>('setup-provider')
+const setupKey = $<HTMLInputElement>('setup-key')
+const setupUrl = $<HTMLInputElement>('setup-url')
+const setupCmd = $<HTMLInputElement>('setup-cmd')
+const setupArgs = $<HTMLInputElement>('setup-args')
+const setupModel = $<HTMLInputElement>('setup-model')
+const setupMsg = $<HTMLParagraphElement>('setup-msg')
+const setupTest = $<HTMLButtonElement>('setup-test')
+const setupSave = $<HTMLButtonElement>('setup-save')
+const setupVoiceLog = $<HTMLPreElement>('setup-voice-log')
+let setupState: SetupUiState = EMPTY_SETUP_UI
+let setupFilled = false
+
+const chosenProvider = (): SetupProvider | undefined => setupState.providers.find((p) => p.id === setupProvider.value)
+/** The form as a request. The key is sent only if one was typed; an empty key means "keep the stored one". */
+const setupRequest = (): SetupRequest => ({ provider: setupProvider.value, model: setupModel.value.trim(), baseUrl: setupUrl.value.trim(), command: setupCmd.value.trim(), args: setupArgs.value.trim(), key: setupKey.value.trim() })
+
+/** Fill the fields from what is saved when the chosen service is the saved one, else start them blank. */
+function fillSetupFields(): void {
+  const cur = setupState.current
+  const same = setupProvider.value === cur.provider
+  setupModel.value = same ? cur.model : ''
+  setupUrl.value = same ? cur.baseUrl : ''
+  setupCmd.value = same ? cur.command : ''
+  setupArgs.value = same ? cur.args : ''
+  setupKey.value = ''
+}
+
+function syncSetup(): void {
+  const s = setupState
+  const key = s.providers.map((p) => p.id).join(',')
+  if (setupProvider.dataset['key'] !== key) {
+    setupProvider.dataset['key'] = key
+    setupProvider.replaceChildren(
+      ...s.providers.map((p) => {
+        const o = document.createElement('option')
+        o.value = p.id
+        o.textContent = p.label
+        return o
+      })
+    )
+    setupFilled = false
+  }
+  if (!setupFilled && s.providers.length > 0) {
+    setupProvider.value = s.providers.some((p) => p.id === s.current.provider) ? s.current.provider : s.providers[0]!.id
+    fillSetupFields()
+    setupFilled = true
+  }
+  const p = chosenProvider()
+  const kind = p?.kind ?? 'mock'
+  const custom = p?.id === 'custom'
+  $('setup-now').textContent = `(now: ${s.providers.find((x) => x.id === s.current.provider)?.label ?? 'offline demo'})`
+  $('setup-hint').textContent = p?.hint ?? ''
+  $('setup-key-row').hidden = !(p?.needsKey || custom)
+  $('setup-url-row').hidden = !custom
+  $('setup-cmd-row').hidden = kind !== 'command'
+  $('setup-args-row').hidden = kind !== 'command'
+  $('setup-model-row').hidden = kind === 'mock'
+  setupModel.placeholder = p?.defaultModel ? `${p.defaultModel} (default)` : 'the default'
+  $('setup-models').replaceChildren(
+    ...(p?.models ?? []).map((m) => {
+      const o = document.createElement('option')
+      o.value = m
+      return o
+    })
+  )
+  setupKey.placeholder = p?.hasKey ? 'A key is stored. Paste a new one to replace it' : 'Paste your key'
+  $('setup-key-note').textContent = !(p?.needsKey || custom)
+    ? ''
+    : !s.secureKeys
+      ? 'This system has no secure storage for keys (on Linux, install gnome-keyring or KWallet), so a typed key cannot be saved. Set the key as an environment variable instead (see the README).'
+      : 'The key is encrypted by your system and kept only on this computer. It is only ever sent to the service itself.'
+  setupMsg.textContent = s.message
+  setupMsg.classList.toggle('error', s.error)
+  setupTest.disabled = s.busy || s.voice.busy
+  setupSave.disabled = s.busy || s.voice.busy
+  setupSave.textContent = kind === 'mock' ? 'Use the offline demo' : 'Save and restart'
+  // voices
+  const v = s.voice
+  $('setup-voice-now').textContent = `(${v.voices} voice${v.voices === 1 ? '' : 's'}, ${v.speech} speech model${v.speech === 1 ? '' : 's'} installed)`
+  $<HTMLButtonElement>('setup-voices-starter').disabled = v.busy || v.done || s.busy
+  $<HTMLButtonElement>('setup-voices-big').disabled = v.busy || v.done || s.busy
+  $('setup-voices-cancel').hidden = !v.busy
+  setupVoiceLog.hidden = v.log.length === 0
+  setupVoiceLog.textContent = v.log.join('\n')
+  setupVoiceLog.classList.toggle('error', v.error)
+  setupVoiceLog.scrollTop = setupVoiceLog.scrollHeight
+}
+
+function toggleSetup(open: boolean): void {
+  if (open) for (const id of ['petbar', 'databar', 'themebar']) $(id).hidden = true
+  setupbar.hidden = !open
+  setupBtn.setAttribute('aria-expanded', String(open))
+  if (open) {
+    window.chat.openSetup()
+    setupProvider.focus()
+  } else {
+    setupKey.value = '' // a pasted key never lingers in the page
+    setupFilled = false
+    input.focus()
+  }
+}
+window.chat.onSetupState((s) => {
+  setupState = s
+  syncSetup()
+})
+window.chat.onSetupShow(() => toggleSetup(true))
+setupBtn.addEventListener('click', () => toggleSetup(setupbar.hidden))
+$('empty-setup').addEventListener('click', () => toggleSetup(true))
+$('setup-done').addEventListener('click', () => toggleSetup(false))
+setupProvider.addEventListener('change', () => {
+  fillSetupFields()
+  setupState = { ...setupState, message: '', error: false }
+  syncSetup()
+})
+setupTest.addEventListener('click', () => window.chat.testSetup(setupRequest()))
+setupSave.addEventListener('click', () => window.chat.saveSetup(setupRequest()))
+$('setup-voices-starter').addEventListener('click', () => window.chat.installVoices('starter'))
+$('setup-voices-big').addEventListener('click', () => window.chat.installVoices('recommended'))
+$('setup-voices-cancel').addEventListener('click', () => window.chat.cancelVoices())
+syncSetup()
+
 // ---------------------------------------------------------------- change your pet
 const petBtn = $<HTMLButtonElement>('pet-btn')
 const petbar = $<HTMLElement>('petbar')
@@ -636,7 +769,7 @@ function syncPet(): void {
   petUndo.disabled = s.busy || !s.canUndo
   $<HTMLButtonElement>('pet-reset').disabled = s.busy || s.isDefault
   $<HTMLButtonElement>('pet-add').disabled = petImages.length >= MAX_PET_IMAGES || !s.canSeeImages
-  $<HTMLButtonElement>('pet-add').title = s.canSeeImages ? 'Add up to 4 pictures for inspiration' : s.hasAi ? 'The connected AI cannot look at pictures' : 'Connect an AI that can see pictures (npm run setup)'
+  $<HTMLButtonElement>('pet-add').title = s.canSeeImages ? 'Add up to 4 pictures for inspiration' : s.hasAi ? 'The connected AI cannot look at pictures' : 'Connect an AI that can see pictures (Set up, the plug button)'
   if (!s.supported) petMsg.textContent = 'Custom pets need the standing figure: set "cat.view": "figure" in settings.json.'
   const box = $('pet-presets')
   const key = s.presets.map((p) => p.id).join(',')

@@ -172,7 +172,7 @@ export function systemTtsPlan(platform: NodeJS.Platform, o: { voice: string; rat
 export function createSystemTts(o: { voice: string; rate: number; onError?: (m: string) => void; platform?: NodeJS.Platform; bin?: string }): SayTts {
   const plan = systemTtsPlan(o.platform ?? process.platform, o)
   if (plan.kind === 'none' && !o.bin) {
-    return new SayTts({ voice: o.voice, rate: o.rate, bin: '/nonexistent/speech', onError: () => o.onError?.('No system voice was found. Install espeak-ng (for example: sudo apt install espeak-ng), or use the offline voices: npm run voices -- install --recommended') })
+    return new SayTts({ voice: o.voice, rate: o.rate, bin: '/nonexistent/speech', onError: () => o.onError?.('No system voice was found. Install espeak-ng (for example: sudo apt install espeak-ng), or download the offline voices in Set up (the plug button in the chat header)') })
   }
   return new SayTts({ voice: o.voice, rate: o.rate, bin: o.bin ?? plan.bin, args: plan.args, ...(o.onError ? { onError: o.onError } : {}) })
 }
