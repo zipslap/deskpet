@@ -5,6 +5,7 @@ name: Release
 on:
   push:
     tags: ['v*']
+    branches: [release-dry-run] # TEMPORARY: dry run from this branch; remove before merging
   workflow_dispatch:
 
 # The build jobs only read the repository; only the publish job below can write to it.
