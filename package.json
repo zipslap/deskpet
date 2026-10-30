@@ -1,6 +1,6 @@
 {
   "name": "deskpet",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "BETA: a 3D voxel desktop pet for macOS, Windows and Linux that talks to any AI, with offline voices and a pet you redesign by asking",
   "private": true,
   "type": "module",
